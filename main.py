@@ -1,9 +1,13 @@
 import os
 import sqlite3
+import json
 
 import altair as alt
 import pandas as pd
 import streamlit as st
+
+from dotenv import load_dotenv
+from google import genai
 
 from analytics import (
     AnalyticsError,
@@ -721,22 +725,98 @@ def render_analytics() -> None:
                 st.dataframe(cat_df.astype(str).describe().T, width="stretch")
 
 
-def render_ai_placeholder() -> None:
-    st.title("🤖 AI Assistant")
-    st.caption("Placeholder — conversational analytics is not enabled in this batch")
-    st.info(
-        "The conversational analytics assistant will be added in a later batch. "
-        "No Gemini integration and no simulated answers are available yet."
-    )
-    st.markdown(
-        """
-        Planned later:
-        - Ask questions about demand, earnings, and cancellations
-        - Ground answers in the SQLite analytics functions already in `analytics.py`
 
-        Until then, use **Demand**, **Earnings**, **Cancellations**, and **Analytics**.
-        """
+def render_ai_assistant() -> None:
+
+    st.title("🤖 AI Assistant")
+
+    st.caption("Ask questions about your ride data.")
+
+    load_dotenv()
+
+    client = genai.Client()
+
+    get_demand = {
+        "type": "function",
+        "name": "completed_rides_by_pickup_location",
+        "description": (
+            "Returns the number of completed rides for each "
+            "pickup location."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {},
+        },
+    }
+
+    get_earnings = {
+        "type": "function",
+        "name": "strong_earning_opportunity_locations",
+        "description": (
+            "Returns pickup locations with strong earning opportunities "
+            "based on average booking value and value per kilometer."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {},
+        },
+    }
+
+    question = st.chat_input(
+        "Ask about ride demand or earnings..."
     )
+
+    if question:
+
+        with st.chat_message("user"):
+            st.write(question)
+
+        with st.chat_message("assistant"):
+
+            with st.spinner("Analyzing your data..."):
+
+                interaction = client.interactions.create(
+                    model="gemini-3.6-flash",
+                    input=question,
+                    tools=[get_demand, get_earnings],
+                )
+
+                for step in interaction.steps:
+
+                    if step.type == "function_call":
+
+                        if step.name == "completed_rides_by_pickup_location":
+                            result = completed_rides_by_pickup_location()
+
+                        elif step.name == "strong_earning_opportunity_locations":
+                            result = strong_earning_opportunity_locations()
+
+                        follow_up = client.interactions.create(
+                            model="gemini-3.6-flash",
+                            previous_interaction_id=interaction.id,
+                            input=[
+                                {
+                                    "type": "function_result",
+                                    "name": step.name,
+                                    "call_id": step.id,
+                                    "result": [
+                                        {
+                                            "type": "text",
+                                            "text": json.dumps(
+                                                result.to_dict(
+                                                    orient="records"
+                                                )
+                                            ),
+                                        }
+                                    ],
+                                }
+                            ],
+                        )
+
+                        st.write(
+                            follow_up.output_text
+                        )
+
 
 
 # ==========================================
@@ -765,6 +845,6 @@ try:
     elif page == NAV_ANALYTICS:
         render_analytics()
     elif page == NAV_AI:
-        render_ai_placeholder()
+        render_ai_assistant()
 except AnalyticsError as exc:
     st.error(str(exc))

@@ -633,3 +633,63 @@ ALL_ANALYTICS_FUNCTIONS = (
     driver_cancellation_reasons,
     incomplete_ride_counts_and_reasons,
 )
+
+
+
+def get_festival_summary(helper: SQLiteQueryHelper) -> pd.DataFrame:
+    """Compare ride outcomes on selected festival vs non-festival dates."""
+    query = """
+        SELECT
+            "Is_Festival",
+            COUNT(*) AS total_rides,
+            SUM(
+                CASE
+                    WHEN "Booking Status" = 'Completed'
+                    THEN 1 ELSE 0
+                END
+            ) AS completed_rides,
+            ROUND(
+                100.0 * SUM(
+                    CASE
+                        WHEN "Booking Status" = 'Completed'
+                        THEN 1 ELSE 0
+                    END
+                ) / COUNT(*),
+                2
+            ) AS completion_rate,
+            ROUND(
+                100.0 * SUM(
+                    CASE
+                        WHEN "Booking Status" IN ('Cancelled by Customer', 'Cancelled by Driver')
+                        THEN 1 ELSE 0
+                    END
+                ) / COUNT(*),
+                2
+            ) AS cancellation_rate
+        FROM rides
+        GROUP BY "Is_Festival"
+        ORDER BY "Is_Festival";
+    """
+    return helper.query(query)
+
+
+
+def get_festival_earnings(helper: SQLiteQueryHelper) -> pd.DataFrame:
+    """Compare completed-ride earnings on festival vs non-festival days."""
+    query = """
+        SELECT
+            "Is_Festival",
+            COUNT(*) AS completed_rides,
+            ROUND(AVG("Booking Value"), 2) AS avg_booking_value,
+            ROUND(AVG("Ride Distance"), 2) AS avg_ride_distance,
+            ROUND(AVG("Value_Per_Km"), 2) AS avg_value_per_km
+        FROM rides
+        WHERE "Booking Status" = 'Completed'
+        GROUP BY "Is_Festival"
+        ORDER BY "Is_Festival";
+    """
+    return helper.query(query)
+if __name__ == "__main__":
+    with SQLiteQueryHelper() as helper:
+        result = get_festival_earnings(helper)
+        print(result.to_string(index=False))            
