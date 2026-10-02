@@ -1,63 +1,96 @@
-# MobilityLens — AI-Powered Mobility Analytics
+# 🚕 MobilityLens — AI-Powered Mobility Analytics
 
-MobilityLens is an interactive Streamlit application that combines **Data Analytics, SQL, Python, APIs, and Generative AI** to explore historical ride-demand and mobility patterns.
+MobilityLens is an interactive **Data Analytics application** built with Python, SQL, Streamlit, APIs, and Generative AI to help users understand historical ride-demand and mobility patterns.
 
-The application uses the **FairFare synthetic/generated multi-city dataset** to analyze demand, fares, cancellations, ride types, and other mobility metrics across major Indian cities. It also uses current weather and traffic context and Gemini Generative AI to provide natural-language explanations of historical data.
+The application analyzes the **FairFare synthetic/generated multi-city dataset** to explore demand, fares, cancellations, ride types, driver availability, and other mobility metrics across major Indian cities.
 
-> **Important:** FairFare is synthetic/generated data for analytical demonstration. It is not official Uber, Ola, or real-world operational data. Historical patterns shown by the application should not be interpreted as guaranteed future outcomes.
+It also combines historical analytics with **current weather and traffic context** and uses **Google Gemini Generative AI** to explain calculated historical insights in natural language.
+
+> **Important:** FairFare is synthetic/generated data created for analytical demonstration. It is not official Uber, Ola, or real-world operational data. Historical patterns should not be interpreted as guaranteed future outcomes.
 
 ---
 
-## Features
+## 📌 Business Problem
 
-### 📊 Historical Mobility Analytics
+Ride-hailing platforms generate large amounts of data related to demand, fares, cancellations, ride types, driver availability, weather, and other operational factors.
 
-- Historical booking and ride metrics
-- Demand-level analysis
-- Average fare analysis
-- Ride-distance analysis
-- Cancellation analysis
-- Ride-type comparisons
-- City-level comparisons
+However, raw mobility data can be difficult for users to explore and interpret.
+
+The goal of MobilityLens is to provide an interactive way to:
+
+- Understand historical ride-demand patterns
+- Explore fare and ride-distance behavior
+- Analyze cancellation patterns
+- Compare cities and ride types
+- Examine relationships between demand and operational factors
+- Add current weather and traffic context
+- Ask natural-language questions about the historical data
+
+The application combines traditional Data Analytics with Generative AI to make the analysis easier to explore and understand.
+
+---
+
+## 🎯 Project Objective
+
+The main objective of MobilityLens is to build an interactive mobility analytics application that combines:
+
+- SQL-based historical analysis
+- Python and Pandas data processing
+- Interactive Streamlit dashboards
+- Live API-based contextual information
+- Generative AI for natural-language explanations
+
+The project demonstrates how a Data Analyst can combine **data analysis, business understanding, APIs, and Generative AI** into an end-to-end analytics application.
+
+---
+
+## 🔍 What the Application Analyzes
+
+MobilityLens focuses on several important mobility metrics:
+
+- 🚕 Ride demand
+- 💰 Final fare
+- 📏 Ride distance
+- ❌ Cancellation rate
+- 🚗 Driver availability
+- 📈 Demand score
+- 🚘 Ride type
+- 🌦️ Weather
+- 🚦 Traffic context
+- 📍 City and place context
+- ⏰ Hourly demand patterns
+
+---
+
+# 📊 Application Pages
+
+## 🏠 1. Home
+
+The Home page provides a consolidated view of the selected mobility context.
+
+It includes:
+
+- Historical KPIs
+- Booking and ride metrics
+- Demand levels
+- Average fare
+- Average ride distance
+- Cancellation metrics
 - Historical weather patterns
-- Historical demand patterns by hour and ride type
+- Current weather context
+- Historical mobility information
 
-### 🌦️ Live Context
+### Screenshot
 
-- Current approximate user location
-- Current city detection
-- Live weather information
-- Optional traffic context
-- Historical data combined with current contextual information
+![MobilityLens Home](screenshots/home.png)
 
-### 🤖 Generative AI Assistant
+---
 
-The application integrates **Google Gemini Generative AI** to explain historical mobility patterns in natural language.
+## 🇮🇳 2. India Explorer
 
-The AI Assistant:
+The India Explorer allows users to explore mobility information across the supported cities.
 
-- Uses calculated historical evidence from the application
-- Explains demand, fare, cancellation, and mobility patterns
-- Provides business-oriented interpretations
-- Identifies important factors in the historical data
-- Clearly treats FairFare as synthetic/generated data
-- Does not guarantee or predict future ride outcomes
-
-### 🗄️ SQL-Based Analytics
-
-Historical FairFare data is stored in SQLite and queried using SQL for:
-
-- Filtering
-- Aggregations
-- Grouping
-- City comparisons
-- Hourly analysis
-- Ride-type analysis
-- Historical KPI calculations
-
-### 📍 City and Place Exploration
-
-The application supports historical exploration across:
+Currently supported cities:
 
 - Hyderabad
 - Delhi
@@ -65,93 +98,104 @@ The application supports historical exploration across:
 - Bangalore
 - Chennai
 
-The application also provides selected place/zone contexts for organizing available historical records.
+### Screenshot
+
+![India Explorer](screenshots/india-explorer.png)
 
 ---
 
-## Application Pages
+## 📈 3. Demand Patterns
 
-### Home
+This page focuses on historical demand behavior.
 
-Provides a consolidated view of the selected city/place, including:
-
-- Historical KPIs
-- Demand levels
-- Average fare
-- Ride distance
-- Cancellation metrics
-- Historical weather mix
-- Current weather context
-- Historical mobility context
-
-### India Explorer
-
-Explore supported Indian cities and available mobility/zone information.
-
-### Demand Patterns
-
-Analyze historical demand patterns by:
+Users can explore demand patterns based on:
 
 - City
 - Hour
 - Ride type
 - Demand level
 
-### Historical Earnings
+The analysis helps identify how demand varies across different time periods and mobility contexts.
 
-Explore historical fare and earnings-related metrics across different cities and ride types.
+### Screenshot
 
-### Cancellations
-
-Analyze historical cancellation patterns and cancellation-related metrics.
-
-### AI Assistant
-
-Ask natural-language questions about the historical mobility data and receive Gemini-generated explanations based on the application's calculated evidence.
+![Demand Patterns](screenshots/demand-patterns.png)
 
 ---
 
-## Technology Stack
+## 💰 4. Historical Earnings
 
-| Technology | Purpose |
-|---|---|
-| Python | Application logic and data processing |
-| Pandas | Data manipulation and analysis |
-| NumPy | Numerical operations |
-| SQL / SQLite | Historical data storage and querying |
-| Streamlit | Interactive web application |
-| Altair | Data visualization |
-| Requests | API requests |
-| Open-Meteo | Live weather context |
-| TomTom | Traffic context |
-| Google Gemini | Generative AI explanations |
-| python-dotenv | Environment variable management |
+This page analyzes historical fare and earnings-related information.
+
+Users can explore:
+
+- Historical fares
+- Ride types
+- Ride distance
+- City-level differences
+- Historical mobility patterns related to earnings
+
+The analysis is based on historical records in the FairFare dataset and does not represent guaranteed future earnings.
+
+### Screenshot
+
+![Historical Earnings](screenshots/historical-earnings.png)
 
 ---
 
-## Architecture
+## ❌ 5. Cancellations
+
+The Cancellations page analyzes historical cancellation behavior.
+
+It helps explore:
+
+- Cancellation rates
+- Cancellation-related patterns
+- Ride-type differences
+- City-level patterns
+- Historical operational context
+
+### Screenshot
+
+![Cancellations](screenshots/cancellations.png)
+
+---
+
+## 🤖 6. AI Assistant
+
+The AI Assistant allows users to ask natural-language questions about the historical mobility data.
+
+For example:
+
+> **"Based on the historical data in this dataset, what factors are associated with higher demand?"**
+
+The application first calculates relevant evidence using its SQL/Python analytics layer and then provides that evidence to Gemini.
+
+Gemini converts the calculated evidence into a natural-language explanation.
+
+### Screenshot
+
+![AI Assistant](screenshots/ai-assistant.png)
+
+---
+
+# 🔄 Project Workflow
+
+The application follows a **data-first analytics workflow**:
 
 ```text
 FairFare Dataset
-       │
-       ▼
-   SQLite Database
-       │
-       ▼
-   SQL Queries
-       │
-       ▼
+       ↓
+SQLite Database
+       ↓
+SQL Historical Analysis
+       ↓
 Python / Pandas Processing
-       │
-       ├──────────────► Live Weather API
-       │
-       ├──────────────► Traffic API
-       │
-       ▼
-   Streamlit UI
-       │
-       ▼
- Gemini Generative AI
-       │
-       ▼
-Natural-Language Insights
+       ↓
+Current API Context
+       ↓
+Streamlit Application
+       ↓
+Gemini Generative AI
+       ↓
+Natural-Language Explanation
