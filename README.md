@@ -1,4 +1,3 @@
-````markdown
 # 🚕 MobilityLens — AI-Powered Mobility Analytics
 
 ## 📌 Introduction
@@ -234,10 +233,9 @@ SQL / Python Analysis
       ↓
 Calculated Evidence
       ↓
-Gemini
+   Gemini
       ↓
 Natural-Language Explanation
-```
 
 The AI Assistant does not independently calculate the underlying metrics. SQL and Python calculate the evidence first, and Gemini explains the results.
 
@@ -473,4 +471,6 @@ MSc Statistics — Pondicherry University
 **Data Analyst | SQL | Python | Power BI | Excel | Statistics**
 
 This project is part of my Data Analyst portfolio, demonstrating how SQL, Python, APIs, Streamlit and Generative AI can be combined to build an interactive, business-focused mobility analytics application.
-````
+Gemini
+      ↓
+Natural-Language Explanation
