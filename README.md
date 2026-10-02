@@ -1,3 +1,4 @@
+````markdown
 # 🚕 MobilityLens — AI-Powered Mobility Analytics
 
 ## 📌 Introduction
@@ -103,24 +104,29 @@ The project uses the **FairFare synthetic/generated multi-city ride-demand datas
 ## 🛠 Tools and Technologies Used
 
 ### 💻 Programming & Query Languages
+
 - Python
 - SQL
 
 ### 📊 Data Analysis
+
 - Pandas
 - NumPy
 - SQLite
 
 ### 📈 Application & Visualization
+
 - Streamlit
 - Altair
 
 ### 🌐 APIs
+
 - Open-Meteo Weather API
 - TomTom Traffic API
 - Requests
 
 ### 🤖 Generative AI
+
 - Google Gemini
 - Google GenAI SDK
 
@@ -129,14 +135,17 @@ The project uses the **FairFare synthetic/generated multi-city ride-demand datas
 ## 🔄 Project Workflow
 
 ### 1. Data Loading
+
 - Loaded FairFare dataset
 - Explored historical mobility data
 
 ### 2. Database Creation
+
 - Stored data in SQLite
 - Created database using Python and Pandas
 
 ### 3. SQL Analysis
+
 - Historical KPIs
 - City analysis
 - Hourly demand
@@ -146,6 +155,7 @@ The project uses the **FairFare synthetic/generated multi-city ride-demand datas
 - Driver availability
 
 ### 4. Python / Pandas
+
 - Data processing
 - Transformations
 - Location processing
@@ -153,11 +163,13 @@ The project uses the **FairFare synthetic/generated multi-city ride-demand datas
 - Application logic
 
 ### 5. Streamlit Application
+
 - Built interactive mobility analytics pages
 - Added historical KPIs and visualizations
 - Added live weather and traffic context
 
 ### 6. Generative AI
+
 - User asks a natural-language question
 - SQL/Python calculates relevant historical evidence
 - Evidence is provided to Gemini
@@ -168,31 +180,37 @@ The project uses the **FairFare synthetic/generated multi-city ride-demand datas
 ## 📊 Application Pages
 
 ### 🏠 Home
+
 Historical KPIs, demand, fare, distance, cancellation, weather and current mobility context.
 
 ![Home](screenshots/home.png)
 
 ### 🇮🇳 India Explorer
+
 Explore historical mobility information across supported Indian cities.
 
 ![India Explorer](screenshots/india-explorer.png)
 
 ### 📈 Demand Patterns
+
 Analyze demand by city, hour, ride type and demand level.
 
 ![Demand Patterns](screenshots/demand-patterns.png)
 
 ### 💰 Historical Earnings
+
 Explore historical fares, ride distance and ride-type patterns.
 
 ![Historical Earnings](screenshots/historical-earnings.png)
 
 ### ❌ Cancellations
+
 Analyze historical cancellation rates and cancellation patterns.
 
 ![Cancellations](screenshots/cancellations.png)
 
 ### 🤖 AI Assistant
+
 Ask natural-language questions about the historical mobility data.
 
 ![AI Assistant](screenshots/ai-assistant.png)
@@ -217,8 +235,10 @@ SQL / Python Analysis
 Calculated Evidence
       ↓
 Gemini
+      ↓
+Natural-Language Explanation
+```
 
-````markdown
 The AI Assistant does not independently calculate the underlying metrics. SQL and Python calculate the evidence first, and Gemini explains the results.
 
 The application is a **Generative AI application**, not an autonomous agentic AI system.
@@ -454,6 +474,3 @@ MSc Statistics — Pondicherry University
 
 This project is part of my Data Analyst portfolio, demonstrating how SQL, Python, APIs, Streamlit and Generative AI can be combined to build an interactive, business-focused mobility analytics application.
 ````
-
-      ↓
-Natural-Language Explanation
