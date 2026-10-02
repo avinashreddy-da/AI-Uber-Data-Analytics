@@ -182,37 +182,37 @@ The project uses the **FairFare synthetic/generated multi-city ride-demand datas
 
 Historical KPIs, demand, fare, distance, cancellation, weather and current mobility context.
 
-![Home](screenshots/home.png)
+![Home](Screenshots/home.png)
 
 ### 🇮🇳 India Explorer
 
 Explore historical mobility information across supported Indian cities.
 
-![India Explorer](screenshots/india-explorer.png)
+![India Explorer](Screenshots/india-explorer.png)
 
 ### 📈 Demand Patterns
 
 Analyze demand by city, hour, ride type and demand level.
 
-![Demand Patterns](screenshots/demand-patterns.png)
+![Demand Patterns](Screenshots/demand-patterns.png)
 
 ### 💰 Historical Earnings
 
 Explore historical fares, ride distance and ride-type patterns.
 
-![Historical Earnings](screenshots/historical-earnings.png)
+![Historical Earnings](Screenshots/historical-earnings.png)
 
 ### ❌ Cancellations
 
 Analyze historical cancellation rates and cancellation patterns.
 
-![Cancellations](screenshots/cancellations.png)
+![Cancellations](Screenshots/cancellations.png)
 
 ### 🤖 AI Assistant
 
 Ask natural-language questions about the historical mobility data.
 
-![AI Assistant](screenshots/ai-assistant.png)
+![AI Assistant](Screenshots/ai-assistant.png)
 
 ---
 
