@@ -217,5 +217,243 @@ SQL / Python Analysis
 Calculated Evidence
       ↓
 Gemini
+
+````markdown
+The AI Assistant does not independently calculate the underlying metrics. SQL and Python calculate the evidence first, and Gemini explains the results.
+
+The application is a **Generative AI application**, not an autonomous agentic AI system.
+
+---
+
+## 🔍 Key Insights
+
+- Historical demand varies across cities and hours.
+- Driver availability can be analyzed alongside demand.
+- Fare behavior can be compared with ride distance and ride type.
+- Cancellation patterns vary across historical mobility contexts.
+- Weather and event categories can be analyzed alongside demand.
+- Demand scores provide an additional measure of historical demand.
+- Different ride types show different fare and distance patterns.
+- Some selected places may use broader city-level historical context when place-specific records are limited.
+- Current weather and traffic provide additional context but are not historical FairFare observations.
+- Results represent patterns in synthetic/generated data and are not official operational statistics.
+
+---
+
+## 🌦️ API Integration
+
+### Weather API
+
+Open-Meteo is used to retrieve current weather information.
+
+### Traffic API
+
+TomTom is used to provide current traffic context where available.
+
+### Location
+
+Approximate current location can be used to determine the current city and provide relevant context.
+
+---
+
+## 🗄️ Database & SQL
+
+SQLite is used as the local analytical database.
+
+SQL is used for:
+
+- Filtering
+- Aggregation
+- City analysis
+- Hourly analysis
+- Ride-type analysis
+- Demand analysis
+- Fare calculations
+- Cancellation analysis
+- Driver availability
+- KPI calculations
+
+---
+
+## 💼 Business Impact
+
+MobilityLens demonstrates how a Data Analyst can combine:
+
+- SQL
+- Python
+- Pandas
+- Data Visualization
+- APIs
+- Business Analysis
+- Generative AI
+
+to build an end-to-end analytics application.
+
+The project moves from:
+
+```text
+Raw Mobility Data
+       ↓
+Data Processing
+       ↓
+Historical Analysis
+       ↓
+Business Evidence
+       ↓
+Interactive Exploration
+       ↓
+Natural-Language Explanation
+```
+
+---
+
+## 📂 Project Structure
+
+```text
+MobilityLens/
+│
+├── main.py
+├── database.py
+├── create_database.py
+├── requirements.txt
+├── README.md
+├── .gitignore
+│
+├── screenshots/
+│   ├── home.png
+│   ├── india-explorer.png
+│   ├── demand-patterns.png
+│   ├── historical-earnings.png
+│   ├── cancellations.png
+│   └── ai-assistant.png
+│
+└── data/
+    └── README.md
+```
+
+### Main Files
+
+**`main.py`** — Streamlit application, analytics workflow, APIs, location processing and Gemini integration.
+
+**`database.py`** — SQLite database and SQL analytical queries.
+
+**`create_database.py`** — Creates the SQLite database from the FairFare dataset.
+
+**`requirements.txt`** — Python dependencies.
+
+---
+
+## ⚙️ Setup
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/avinashreddy-da/AI-Uber-Data-Analytics.git
+cd AI-Uber-Data-Analytics
+```
+
+### 2. Create Virtual Environment
+
+```bash
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure API Keys
+
+Create `.env`:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key
+TOMTOM_API_KEY=your_tomtom_api_key
+```
+
+Do not commit API keys to GitHub.
+
+### 5. Add Dataset
+
+Place the required files inside the `data/` folder:
+
+```text
+data/fairfare_ride_demand_dataset.csv
+data/mobilitylens_zones.csv
+```
+
+### 6. Create Database
+
+```bash
+python create_database.py
+```
+
+### 7. Run Application
+
+```bash
+streamlit run main.py
+```
+
+---
+
+## ⚠️ Limitations
+
+- FairFare is synthetic/generated data.
+- It is not official Uber or Ola operational data.
+- Historical results depend on available records.
+- The dataset covers selected Indian cities.
+- Some places may use broader city-level historical context.
+- Weather and traffic APIs provide current context, not historical observations.
+- Historical patterns do not guarantee future demand, fares, earnings or cancellations.
+- Gemini provides analytical explanations and should not be treated as an authoritative prediction.
+- MobilityLens is a portfolio/demo analytics application, not a production ride-hailing platform.
+
+---
+
+## 🎓 Skills Demonstrated
+
+- SQL
+- Python
+- Pandas
+- NumPy
+- SQLite
+- Data Analysis
+- Business Analysis
+- Data Visualization
+- Streamlit
+- API Integration
+- Generative AI
+- Google Gemini
+- Natural-Language Analytics
+- End-to-End Analytics Application Development
+
+---
+
+## 📌 Key Takeaways
+
+- MobilityLens combines Data Analytics with Generative AI.
+- SQL and Python calculate the underlying historical evidence.
+- Streamlit provides the interactive analytics interface.
+- APIs provide current weather and traffic context.
+- Gemini converts calculated evidence into natural-language explanations.
+- The project demonstrates practical integration of SQL, Python, APIs and Generative AI in a Data Analyst portfolio project.
+- The FairFare dataset is synthetic/generated and intended for analytical demonstration.
+
+---
+
+## 👤 Author
+
+**Avinash Reddy**
+
+MSc Statistics — Pondicherry University
+
+**Data Analyst | SQL | Python | Power BI | Excel | Statistics**
+
+This project is part of my Data Analyst portfolio, demonstrating how SQL, Python, APIs, Streamlit and Generative AI can be combined to build an interactive, business-focused mobility analytics application.
+````
+
       ↓
 Natural-Language Explanation
