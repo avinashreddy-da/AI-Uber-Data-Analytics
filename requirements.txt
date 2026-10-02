@@ -1,5 +1,7 @@
-streamlit
-pandas
-requests
-google-generativeai
-python-dotenv
+streamlit==1.64.0
+pandas==3.0.6
+numpy==2.5.3
+requests==2.34.2
+altair==6.3.0
+python-dotenv==1.2.3
+google-genai==2.27.0
