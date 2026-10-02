@@ -1,4 +1,4 @@
-````markdown
+
 # 🚕 MobilityLens — AI-Powered Mobility Data Analytics
 
 ## Introduction
@@ -79,6 +79,7 @@ The project uses the **FairFare Ride Demand Dataset**, containing synthetic/gene
 ## 🛠️ Tools and Libraries
 
 ### Programming & Analytics
+
 - Python
 - Pandas
 - NumPy
@@ -86,17 +87,21 @@ The project uses the **FairFare Ride Demand Dataset**, containing synthetic/gene
 - SQLite
 
 ### Visualization & Application
+
 - Streamlit
 - Altair
 
 ### APIs
+
 - Open-Meteo
 - TomTom Traffic API
 
 ### Generative AI
+
 - Google Gemini API
 
 ### Development
+
 - Git
 - GitHub
 - Cursor
@@ -105,25 +110,23 @@ The project uses the **FairFare Ride Demand Dataset**, containing synthetic/gene
 
 ## 🔄 Project Workflow
 
-```text
-FairFare Dataset
-       ↓
-Data Processing
-       ↓
-SQLite Database
-       ↓
-SQL Analysis
-       ↓
-Python Processing
-       ↓
-Streamlit Application
-       ↓
-APIs + Current Context
-       ↓
-Gemini Generative AI
-       ↓
-Business Insights
-```
+    FairFare Dataset
+           ↓
+    Data Processing
+           ↓
+    SQLite Database
+           ↓
+    SQL Analysis
+           ↓
+    Python Processing
+           ↓
+    Streamlit Application
+           ↓
+    APIs + Current Context
+           ↓
+    Gemini Generative AI
+           ↓
+    Business Insights
 
 ---
 
@@ -145,15 +148,11 @@ Includes:
 - Current weather
 - Optional traffic context
 
----
-
 ### 🇮🇳 India Explorer
 
 Allows users to explore supported Indian cities and demonstration zones.
 
 Users can examine historical mobility information for different locations.
-
----
 
 ### 📈 Demand Patterns
 
@@ -165,8 +164,6 @@ Analyzes historical demand by:
 - Demand level
 - Driver availability
 
----
-
 ### 💰 Historical Earnings
 
 Explores historical fare and earnings-related patterns using:
@@ -176,13 +173,9 @@ Explores historical fare and earnings-related patterns using:
 - Fare
 - Historical mobility records
 
----
-
 ### ❌ Cancellations
 
 Analyzes historical cancellation behavior and related mobility factors.
-
----
 
 ### 🤖 AI Assistant
 
@@ -196,17 +189,15 @@ The application first calculates the relevant evidence using SQL and Python and 
 
 ### AI Workflow
 
-```text
-User Question
-      ↓
-SQL / Python Analysis
-      ↓
-Calculated Evidence
-      ↓
-Gemini
-      ↓
-Natural-Language Explanation
-```
+    User Question
+          ↓
+    SQL / Python Analysis
+          ↓
+    Calculated Evidence
+          ↓
+        Gemini
+          ↓
+    Natural-Language Explanation
 
 The AI Assistant does not independently calculate the underlying metrics. SQL and Python calculate the evidence first, and Gemini explains the results.
 
@@ -280,19 +271,17 @@ to build an end-to-end analytics application.
 
 The project moves from:
 
-```text
-Raw Mobility Data
-       ↓
-Data Processing
-       ↓
-Historical Analysis
-       ↓
-Business Evidence
-       ↓
-Interactive Exploration
-       ↓
-Natural-Language Explanation
-```
+    Raw Mobility Data
+           ↓
+    Data Processing
+           ↓
+    Historical Analysis
+           ↓
+    Business Evidence
+           ↓
+    Interactive Exploration
+           ↓
+    Natural-Language Explanation
 
 ---
 
@@ -326,29 +315,27 @@ Natural-Language Explanation
 
 ## 📂 Project Structure
 
-```text
-AI-Uber-Data-Analytics/
-│
-├── data/
-│   ├── fairfare_ride_demand_dataset.csv
-│   ├── mobilitylens_zones.csv
-│   └── README.md
-│
-├── Screenshots/
-│   ├── ai-assistant.png
-│   ├── cancellations.png
-│   ├── demand-patterns.png
-│   ├── historical-earnings.png
-│   ├── home.png
-│   └── india-explorer.png
-│
-├── main.py
-├── database.py
-├── create_database.py
-├── requirements.txt
-├── README.md
-└── .gitignore
-```
+    AI-Uber-Data-Analytics/
+    │
+    ├── data/
+    │   ├── fairfare_ride_demand_dataset.csv
+    │   ├── mobilitylens_zones.csv
+    │   └── README.md
+    │
+    ├── Screenshots/
+    │   ├── ai-assistant.png
+    │   ├── cancellations.png
+    │   ├── demand-patterns.png
+    │   ├── historical-earnings.png
+    │   ├── home.png
+    │   └── india-explorer.png
+    │
+    ├── main.py
+    ├── database.py
+    ├── create_database.py
+    ├── requirements.txt
+    ├── README.md
+    └── .gitignore
 
 ---
 
@@ -356,37 +343,27 @@ AI-Uber-Data-Analytics/
 
 ### 1. Clone the Repository
 
-```bash
-git clone https://github.com/avinashreddy-da/AI-Uber-Data-Analytics.git
-cd AI-Uber-Data-Analytics
-```
+    git clone https://github.com/avinashreddy-da/AI-Uber-Data-Analytics.git
+    cd AI-Uber-Data-Analytics
 
 ### 2. Install Dependencies
 
-```bash
-pip install -r requirements.txt
-```
+    pip install -r requirements.txt
 
 ### 3. Configure API Keys
 
 Create a `.env` file and add the required API keys:
 
-```text
-GEMINI_API_KEY=your_gemini_api_key
-TOMTOM_API_KEY=your_tomtom_api_key
-```
+    GEMINI_API_KEY=your_gemini_api_key
+    TOMTOM_API_KEY=your_tomtom_api_key
 
 ### 4. Create the Database
 
-```bash
-python create_database.py
-```
+    python create_database.py
 
 ### 5. Run the Application
 
-```bash
-streamlit run main.py
-```
+    streamlit run main.py
 
 ---
 
@@ -439,4 +416,3 @@ MSc Statistics — Pondicherry University
 Aspiring Data Analyst
 
 Skills: SQL | Python | Pandas | Excel | Power BI | Statistics | Business Analysis | Generative AI
-````
