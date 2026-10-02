@@ -24,18 +24,19 @@ The project is designed as a **Data Analyst portfolio project** demonstrating ho
 
 ## 💼 Business Problem
 
-Ride-hailing and mobility platforms generate large amounts of operational data.
+Ride-hailing services need to understand what affects customer demand and ride activity.
 
-A Data Analyst can use this data to answer questions such as:
+MobilityLens helps answer questions such as:
 
-- When is demand higher?
-- How does demand vary across cities and hours?
-- How do fares vary by ride type and distance?
-- What patterns are associated with cancellations?
-- How does driver availability relate to demand?
-- How can current weather and traffic provide additional context?
+- When is ride demand higher or lower?
+- How does demand change across different cities and hours?
+- Is there a relationship between driver availability and demand?
+- How do ride distance and ride type affect fares?
+- When are cancellations more common?
+- How do weather and events relate to ride demand?
+- What is the current weather and traffic situation for a selected location?
 
-MobilityLens brings these analytical questions together in an interactive application.
+The goal is to bring these factors together in one simple application so mobility patterns can be explored and understood more easily.
 
 ---
 
@@ -257,15 +258,17 @@ SQL is used for:
 
 ## 💼 Business Impact
 
-MobilityLens demonstrates how a Data Analyst can combine:
+MobilityLens helps users understand historical mobility patterns that can support business decisions around:
 
-- SQL
-- Python
-- Pandas
-- Data Visualization
-- APIs
-- Business Analysis
-- Generative AI
+- **Demand:** Understand when and where ride demand has been higher or lower.
+- **Drivers:** Understand how driver availability changes with ride demand.
+- **Pricing:** Compare fares across different ride types and distances.
+- **Cancellations:** Identify historical patterns in ride cancellations.
+- **Weather & Events:** Understand how external conditions are associated with ride demand.
+- **Locations:** Compare mobility patterns across different cities and selected areas.
+- **Quick Insights:** Get the main findings explained in simple natural language through the AI Assistant.
+
+Overall, MobilityLens turns historical ride data into **easy-to-understand business insights about demand, pricing, drivers, and cancellations**.
 
 to build an end-to-end analytics application.
 
