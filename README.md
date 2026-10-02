@@ -190,19 +190,22 @@ The application first calculates the relevant evidence using SQL and Python and 
 
 ### AI Workflow
 
-    User Question
-          ↓
-    SQL / Python Analysis
-          ↓
-    Calculated Evidence
-          ↓
-        Gemini
-          ↓
-    Natural-Language Explanation
+   User Question
+      ↓
+MobilityLens receives the question
+      ↓
+SQL + Python analyze the historical data
+      ↓
+Relevant metrics and evidence are prepared
+      ↓
+Evidence is provided to Gemini
+      ↓
+Gemini interprets the evidence
+      ↓
+Natural-Language Business Insight
+The AI Assistant uses SQL and Python to calculate the underlying metrics from the historical dataset. Gemini then uses this calculated evidence to generate a natural-language explanation.
 
-The AI Assistant does not independently calculate the underlying metrics. SQL and Python calculate the evidence first, and Gemini explains the results.
-
-The application is a **Generative AI application**, not an autonomous agentic AI system.
+The application uses Generative AI to explain analytical results; it is not an autonomous agentic AI system.
 
 ---
 
