@@ -1,0 +1,51 @@
+city,zone,lat,lon,zone_type
+Hyderabad,Madhapur,17.4483,78.3915,IT hub
+Hyderabad,HITEC City,17.4435,78.3772,IT hub
+Hyderabad,Gachibowli,17.4401,78.3489,IT hub
+Hyderabad,Secunderabad Railway Station,17.4399,78.4983,railway station
+Hyderabad,Rajiv Gandhi International Airport,17.2403,78.4294,airport
+Hyderabad,Charminar,17.3616,78.4747,market
+Hyderabad,Ameerpet,17.4375,78.4483,market
+Hyderabad,Kukatpally,17.4849,78.4138,residential
+Hyderabad,Banjara Hills,17.4156,78.4347,residential
+Hyderabad,Jubilee Hills,17.4325,78.4071,mall/entertainment
+Delhi,Connaught Place,28.6315,77.2167,mall/entertainment
+Delhi,New Delhi Railway Station,28.6423,77.2197,railway station
+Delhi,Indira Gandhi International Airport,28.5562,77.1000,airport
+Delhi,Karol Bagh,28.6514,77.1907,market
+Delhi,Chandni Chowk,28.6506,77.2303,market
+Delhi,Lajpat Nagar,28.5677,77.2430,market
+Delhi,Saket,28.5245,77.2060,mall/entertainment
+Delhi,Dwarka Sector 21,28.5526,77.0580,residential
+Delhi,Noida Sector 18,28.5676,77.3210,mall/entertainment
+Delhi,Cyber Hub Gurugram,28.4945,77.0895,IT hub
+Mumbai,Bandra,19.0600,72.8358,mall/entertainment
+Mumbai,Bandra Kurla Complex,19.0607,72.8656,IT hub
+Mumbai,Andheri,19.1197,72.8478,residential
+Mumbai,Chhatrapati Shivaji Maharaj International Airport,19.0896,72.8656,airport
+Mumbai,Chhatrapati Shivaji Maharaj Terminus,18.9402,72.8356,railway station
+Mumbai,Dadar,19.0180,72.8478,railway station
+Mumbai,Lower Parel,18.9988,72.8258,mall/entertainment
+Mumbai,Powai,19.1176,72.9060,IT hub
+Mumbai,Colaba,18.9220,72.8347,market
+Mumbai,Juhu,19.1075,72.8263,mall/entertainment
+Bangalore,Whitefield,12.9698,77.7500,IT hub
+Bangalore,Electronic City,12.8452,77.6602,IT hub
+Bangalore,Indiranagar,12.9784,77.6408,mall/entertainment
+Bangalore,MG Road,12.9758,77.6097,mall/entertainment
+Bangalore,Kempegowda Railway Station,12.9762,77.5713,railway station
+Bangalore,Kempegowda International Airport,13.1986,77.7066,airport
+Bangalore,Koramangala,12.9352,77.6245,residential
+Bangalore,Yeshwanthpur,13.0280,77.5408,railway station
+Bangalore,Jayanagar,12.9250,77.5938,residential
+Bangalore,Hebbal,13.0358,77.5970,residential
+Chennai,T Nagar,13.0418,80.2341,market
+Chennai,Guindy,13.0067,80.2206,IT hub
+Chennai,OMR,12.8429,80.2264,IT hub
+Chennai,Chennai International Airport,12.9800,80.1634,airport
+Chennai,Chennai Egmore,13.0732,80.2609,railway station
+Chennai,Chennai Central,13.0827,80.2707,railway station
+Chennai,Marina Beach,13.0500,80.2824,mall/entertainment
+Chennai,Adyar,13.0012,80.2565,residential
+Chennai,Anna Nagar,13.0850,80.2101,residential
+Chennai,Velachery,12.9815,80.2180,residential
