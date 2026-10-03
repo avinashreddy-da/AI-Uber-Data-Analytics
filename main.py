@@ -201,6 +201,46 @@ DAYS = [
     "Sunday",
 ]
 
+
+def csv_day_of_week_code(day_name):
+    """Map UI weekday name to FairFare Day_of_Week (Monday=0)."""
+    if day_name is None or (
+        isinstance(day_name, float)
+        and pd.isna(day_name)
+    ):
+        return None
+
+    if isinstance(day_name, (int, float)):
+        value = int(day_name)
+
+        if 0 <= value <= 6:
+            return value
+
+        return None
+
+    value = str(day_name).strip()
+
+    if not value:
+        return None
+
+    lowered = value.lower()
+
+    for code, name in enumerate(DAYS):
+        if name.lower() == lowered:
+            return code
+
+    try:
+        code = int(float(value))
+
+        if 0 <= code <= 6:
+            return code
+
+    except (ValueError, TypeError):
+        pass
+
+    return None
+
+
 RIDE_TYPE_ORDER = [
     "Economy",
     "Premium",
@@ -1647,15 +1687,15 @@ def filter_zoned_data(
             == int(hour)
         ]
 
-    if day_name:
+    day_code = csv_day_of_week_code(day_name)
+
+    if day_code is not None:
         data = data[
-            data["Day_of_Week"]
-            .astype(str)
-            .str.strip()
-            .str.lower()
-            == str(day_name)
-            .strip()
-            .lower()
+            pd.to_numeric(
+                data["Day_of_Week"],
+                errors="coerce",
+            )
+            == day_code
         ]
 
     if (
@@ -1831,16 +1871,12 @@ def _build_historical_context_result(
         )
     )
 
-    demand_counts = (
-        data["Demand_Level"]
-        .astype(str)
-        .str.strip()
-        .value_counts()
-    )
-
-    total = max(
-        1,
-        len(data),
+    demand_breakdown = (
+        get_demand_level_breakdown(
+            data
+        ).to_dict(
+            orient="records"
+        )
     )
 
     return {
@@ -1904,32 +1940,7 @@ def _build_historical_context_result(
                 "Traffic_Delay"
             ].mean()
         ),
-        "demand_breakdown": [
-            {
-                "Demand Level": label,
-                "Records": int(
-                    demand_counts.get(
-                        label,
-                        0,
-                    )
-                ),
-                "Share": (
-                    float(
-                        demand_counts.get(
-                            label,
-                            0,
-                        )
-                    )
-                    / total
-                    * 100.0
-                ),
-            }
-            for label in [
-                "Low",
-                "Medium",
-                "High",
-            ]
-        ],
+        "demand_breakdown": demand_breakdown,
         "weather_mix": (
             data["Weather"]
             .value_counts()
@@ -2096,41 +2107,41 @@ def get_zone_context(
     # 1. EXACT PLACE + HOUR + WEEKDAY
     # ------------------------------------------------------------------
 
+    day_code = csv_day_of_week_code(day_name)
+
     if not zone_base.empty:
         exact_zone = zone_base[
-            (
-                zone_base["Hour_of_Day"]
-                == int(hour)
-            )
-            & (
-                zone_base[
-                    "Day_of_Week"
-                ]
-                .astype(str)
-                .str.strip()
-                .str.lower()
-                == str(day_name)
-                .strip()
-                .lower()
-            )
+            zone_base["Hour_of_Day"]
+            == int(hour)
         ].copy()
 
-        if not exact_zone.empty:
-            result = (
-                _build_historical_context_result(
-                    exact_zone,
-                    city,
-                    zone,
-                    hour,
-                    day_name,
-                    ride_type,
-                    "Exact: place + hour + day",
-                    "Zone-level historical records",
+        if day_code is not None:
+            exact_zone = exact_zone[
+                pd.to_numeric(
+                    exact_zone[
+                        "Day_of_Week"
+                    ],
+                    errors="coerce",
                 )
-            )
+                == day_code
+            ]
 
-            if result:
-                return result
+            if not exact_zone.empty:
+                result = (
+                    _build_historical_context_result(
+                        exact_zone,
+                        city,
+                        zone,
+                        hour,
+                        day_name,
+                        ride_type,
+                        "Exact: place + hour + day",
+                        "Zone-level historical records",
+                    )
+                )
+
+                if result:
+                    return result
 
         # --------------------------------------------------------------
         # 2. PLACE + HOUR
@@ -2202,39 +2213,37 @@ def get_zone_context(
     # ------------------------------------------------------------------
 
     exact_city = city_data[
-        (
-            city_data["Hour_of_Day"]
-            == int(hour)
-        )
-        & (
-            city_data[
-                "Day_of_Week"
-            ]
-            .astype(str)
-            .str.strip()
-            .str.lower()
-            == str(day_name)
-            .strip()
-            .lower()
-        )
+        city_data["Hour_of_Day"]
+        == int(hour)
     ].copy()
 
-    if not exact_city.empty:
-        result = (
-            _build_historical_context_result(
-                exact_city,
-                city,
-                zone,
-                hour,
-                day_name,
-                ride_type,
-                "City + hour + weekday",
-                "City-level historical fallback",
+    if day_code is not None:
+        exact_city = exact_city[
+            pd.to_numeric(
+                exact_city[
+                    "Day_of_Week"
+                ],
+                errors="coerce",
             )
-        )
+            == day_code
+        ]
 
-        if result:
-            return result
+        if not exact_city.empty:
+            result = (
+                _build_historical_context_result(
+                    exact_city,
+                    city,
+                    zone,
+                    hour,
+                    day_name,
+                    ride_type,
+                    "City + hour + weekday",
+                    "City-level historical fallback",
+                )
+            )
+
+            if result:
+                return result
 
     # ------------------------------------------------------------------
     # 5. CITY + HOUR
