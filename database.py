@@ -4,53 +4,24 @@ import pandas as pd
 
 
 # ============================================================
-# DATABASE PATH
+# Paths
 # ============================================================
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 DB_PATH = os.path.join(
+    BASE_DIR,
     "data",
     "mobilitylens.db",
 )
 
 
 # ============================================================
-# DATABASE CHECKS
-# ============================================================
-
-def database_exists():
-    return os.path.exists(DB_PATH)
-
-
-def table_exists(table_name):
-    if not database_exists():
-        return False
-
-    connection = sqlite3.connect(DB_PATH)
-
-    try:
-        row = connection.execute(
-            """
-            SELECT 1
-            FROM sqlite_master
-            WHERE type = 'table'
-              AND name = ?
-            LIMIT 1
-            """,
-            (table_name,),
-        ).fetchone()
-
-        return row is not None
-
-    finally:
-        connection.close()
-
-
-# ============================================================
-# CONNECTION
+# Database connection
 # ============================================================
 
 def get_connection():
-    if not database_exists():
+    if not os.path.exists(DB_PATH):
         raise FileNotFoundError(
             f"Database not found: {DB_PATH}"
         )
@@ -58,511 +29,980 @@ def get_connection():
     return sqlite3.connect(DB_PATH)
 
 
-# ============================================================
-# SQL READER
-# ============================================================
-
-def read_sql(query, params=()):
-    connection = get_connection()
+def read_sql(query, params=None):
+    conn = get_connection()
 
     try:
         return pd.read_sql_query(
             query,
-            connection,
-            params=params,
+            conn,
+            params=params or [],
         )
-
     finally:
-        connection.close()
+        conn.close()
 
 
 # ============================================================
-# COMMON SQL HELPERS
+# Table helpers
 # ============================================================
 
-def _city_clause(cities):
-    cities = [
-        str(city)
-        for city in cities
-        if city
-    ]
+def get_tables():
+    query = """
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'table'
+        ORDER BY name
+    """
 
-    if not cities:
-        return "", []
+    result = read_sql(query)
 
-    placeholders = ",".join(
-        "?"
-        for _ in cities
-    )
-
-    return (
-        f" AND City IN ({placeholders})",
-        cities,
-    )
-
-
-def _ride_type_clause(ride_type):
-    if (
-        ride_type
-        and ride_type != "All Ride Types"
-    ):
-        return (
-            " AND Ride_Type = ?",
-            [ride_type],
-        )
-
-    return "", []
-
-
-def _normalized_rate_sql(column):
-    return (
-        f"AVG("
-        f"CASE "
-        f"WHEN ABS({column}) <= 1 "
-        f"THEN {column} * 100 "
-        f"ELSE {column} "
-        f"END"
-        f")"
-    )
-
-
-# ============================================================
-# CITY LIST
-# ============================================================
-
-def get_city_list():
-
-    if not database_exists():
+    if result.empty:
         return []
 
-    data = read_sql(
-        """
-        SELECT DISTINCT City
-        FROM rides
-        ORDER BY City
-        """
-    )
+    return result["name"].tolist()
 
-    return (
-        data["City"]
-        .dropna()
-        .tolist()
-    )
+
+def table_exists(table_name):
+    return table_name in get_tables()
+
+
+def get_table_columns(table_name):
+    query = f'PRAGMA table_info("{table_name}")'
+
+    result = read_sql(query)
+
+    if result.empty:
+        return []
+
+    return result["name"].tolist()
+
+
+def get_fairfare_table():
+    tables = get_tables()
+
+    preferred_tables = [
+        "rides",
+        "fairfare",
+        "fairfare_rides",
+        "ride_data",
+    ]
+
+    for table in preferred_tables:
+        if table in tables:
+            return table
+
+    # Fallback: identify a table containing the FairFare columns
+    for table in tables:
+        try:
+            columns = get_table_columns(table)
+
+            if "City" in columns and "Final_Fare" in columns:
+                return table
+
+        except Exception:
+            continue
+
+    return None
 
 
 # ============================================================
-# RIDE TYPE LIST
+# Database availability
 # ============================================================
 
-def get_ride_type_list(city=None):
+def database_available():
+    try:
+        table = get_fairfare_table()
 
-    query = """
-        SELECT DISTINCT Ride_Type
-        FROM rides
+        if table is None:
+            return False
+
+        columns = get_table_columns(table)
+
+        required_columns = [
+            "City",
+            "Date",
+            "Hour_of_Day",
+            "Ride_Type",
+            "Demand_Level",
+            "Demand_Score",
+            "Ride_Distance_KM",
+            "Final_Fare",
+            "Cancellation_Rate",
+        ]
+
+        return all(
+            column in columns
+            for column in required_columns
+        )
+
+    except Exception:
+        return False
+
+
+def zoned_database_available():
+    try:
+        table = get_fairfare_table()
+
+        if table is None:
+            return False
+
+        columns = get_table_columns(table)
+
+        return "Zone" in columns
+
+    except Exception:
+        return False
+
+
+# ============================================================
+# Weekday helpers
+# ============================================================
+
+DAY_NAME_TO_SQLITE_CODE = {
+    "sunday": 0,
+    "monday": 1,
+    "tuesday": 2,
+    "wednesday": 3,
+    "thursday": 4,
+    "friday": 5,
+    "saturday": 6,
+}
+
+
+def normalize_day_value(day_name):
+    """
+    Convert the UI weekday name into SQLite's weekday code.
+
+    IMPORTANT:
+    We do NOT use the dataset's Day_of_Week column.
+
+    Instead, the SQL query calculates the weekday directly
+    from the Date column using SQLite strftime('%w').
+
+    SQLite:
+        Sunday    = 0
+        Monday    = 1
+        Tuesday   = 2
+        Wednesday = 3
+        Thursday  = 4
+        Friday    = 5
+        Saturday  = 6
     """
 
-    params = []
+    if day_name is None:
+        return None
 
-    if city:
-        query += """
-            WHERE City = ?
-        """
+    if isinstance(day_name, (int, float)):
+        value = int(day_name)
 
-        params.append(city)
+        if 0 <= value <= 6:
+            return value
 
-    query += """
-        ORDER BY Ride_Type
+        return None
+
+    value = str(day_name).strip().lower()
+
+    if value in DAY_NAME_TO_SQLITE_CODE:
+        return DAY_NAME_TO_SQLITE_CODE[value]
+
+    # Support numeric strings if ever passed by the UI
+    try:
+        value = int(float(value))
+
+        if 0 <= value <= 6:
+            return value
+
+    except (ValueError, TypeError):
+        pass
+
+    return None
+
+
+# ============================================================
+# SQL weekday condition
+# ============================================================
+
+def add_weekday_filter(
+    conditions,
+    params,
+    day_name,
+):
+    """
+    Add a weekday filter based on the actual Date column.
+
+    We intentionally avoid:
+        Day_of_Week = ?
+
+    because the FairFare Day_of_Week column was found to be
+    inconsistent with Date.
     """
 
-    data = read_sql(
-        query,
-        tuple(params),
-    )
+    day_code = normalize_day_value(day_name)
 
-    return (
-        data["Ride_Type"]
-        .dropna()
-        .tolist()
-    )
+    if day_code is not None:
+        conditions.append(
+            "CAST(strftime('%w', Date) AS INTEGER) = ?"
+        )
+        params.append(day_code)
+
+    return conditions, params
 
 
 # ============================================================
-# FAIRFARE ROWS
+# Ride type helper
 # ============================================================
 
-def get_fairfare_rows(
+def clean_ride_types(ride_types):
+    if not ride_types:
+        return []
+
+    if isinstance(ride_types, str):
+        ride_types = [ride_types]
+
+    result = []
+
+    for ride_type in ride_types:
+        value = str(ride_type).strip()
+
+        if not value:
+            continue
+
+        if value.lower() == "all ride types":
+            continue
+
+        result.append(value)
+
+    return result
+
+
+# ============================================================
+# Base filters
+# ============================================================
+
+def build_base_filters(
     city=None,
-    cities=None,
     hour=None,
     day_name=None,
     ride_types=None,
-    weather=None,
+    zone=None,
 ):
+    """
+    Build common SQL filters.
 
-    query = """
-        SELECT *
-        FROM rides
-        WHERE 1 = 1
+    Weekday is calculated from Date, NOT from Day_of_Week.
     """
 
+    conditions = []
     params = []
 
-    if cities is not None:
+    # --------------------------------------------------------
+    # City
+    # --------------------------------------------------------
 
-        cities = list(cities)
-
-        if not cities:
-            return pd.DataFrame()
-
-        clause, values = _city_clause(
-            cities
-        )
-
-        query += clause
-        params.extend(values)
-
-    elif city:
-
-        query += """
-            AND City = ?
-        """
-
+    if city:
+        conditions.append("City = ?")
         params.append(city)
+
+    # --------------------------------------------------------
+    # Hour
+    # --------------------------------------------------------
 
     if hour is not None:
+        conditions.append("Hour_of_Day = ?")
+        params.append(int(hour))
 
-        query += """
-            AND Hour_of_Day = ?
-        """
+    # --------------------------------------------------------
+    # Actual weekday from Date
+    # --------------------------------------------------------
 
-        params.append(
-            int(hour)
-        )
+    conditions, params = add_weekday_filter(
+        conditions,
+        params,
+        day_name,
+    )
 
-    if day_name:
+    # --------------------------------------------------------
+    # Ride type
+    # --------------------------------------------------------
 
-        query += """
-            AND Day_of_Week = ?
-        """
-
-        params.append(day_name)
+    ride_types = clean_ride_types(ride_types)
 
     if ride_types:
-
-        ride_types = list(
-            ride_types
+        placeholders = ",".join(
+            ["?"] * len(ride_types)
         )
 
-        if not ride_types:
-            return pd.DataFrame()
+        conditions.append(
+            f"Ride_Type IN ({placeholders})"
+        )
+
+        params.extend(ride_types)
+
+    # --------------------------------------------------------
+    # Zone
+    # --------------------------------------------------------
+
+    if zone:
+        conditions.append("Zone = ?")
+        params.append(zone)
+
+    if conditions:
+        where_clause = (
+            " WHERE "
+            + " AND ".join(conditions)
+        )
+    else:
+        where_clause = ""
+
+    return where_clause, params
+
+
+# ============================================================
+# Demand breakdown
+# ============================================================
+
+def build_demand_breakdown(
+    table,
+    where_clause,
+    params,
+    total_count,
+):
+    """
+    Build Low / Medium / High demand breakdown.
+
+    First attempts to use Demand_Level.
+
+    If the labels cannot be mapped reliably, Demand_Score
+    tertiles are used as a fallback.
+    """
+
+    labels = [
+        "Low",
+        "Medium",
+        "High",
+    ]
+
+    demand_map = {
+        "Low": 0,
+        "Medium": 0,
+        "High": 0,
+    }
+
+    # --------------------------------------------------------
+    # Stored demand labels
+    # --------------------------------------------------------
+
+    query = f"""
+        SELECT
+            Demand_Level,
+            COUNT(*) AS Records
+        FROM "{table}"
+        {where_clause}
+        GROUP BY Demand_Level
+    """
+
+    try:
+        demand = read_sql(
+            query,
+            params,
+        )
+    except Exception:
+        demand = pd.DataFrame()
+
+    mapped_records = 0
+
+    if not demand.empty:
+
+        for _, row in demand.iterrows():
+
+            label = str(
+                row["Demand_Level"]
+            ).strip().lower()
+
+            records = int(
+                row["Records"]
+            )
+
+            if "low" in label:
+                normalized = "Low"
+
+            elif "medium" in label:
+                normalized = "Medium"
+
+            elif "high" in label:
+                normalized = "High"
+
+            else:
+                normalized = None
+
+            if normalized:
+
+                demand_map[normalized] += records
+
+                mapped_records += records
+
+    # --------------------------------------------------------
+    # Demand score fallback
+    # --------------------------------------------------------
+
+    if mapped_records < max(
+        3,
+        int(total_count * 0.5),
+    ):
+
+        score_query = f"""
+            SELECT
+                Demand_Score
+            FROM "{table}"
+            {where_clause}
+        """
+
+        try:
+            score_rows = read_sql(
+                score_query,
+                params,
+            )
+        except Exception:
+            score_rows = pd.DataFrame()
+
+        if (
+            not score_rows.empty
+            and "Demand_Score" in score_rows.columns
+        ):
+
+            scores = pd.to_numeric(
+                score_rows["Demand_Score"],
+                errors="coerce",
+            )
+
+            scores = scores.dropna()
+
+            if not scores.empty:
+
+                q1 = scores.quantile(
+                    1 / 3
+                )
+
+                q2 = scores.quantile(
+                    2 / 3
+                )
+
+                low = int(
+                    (scores <= q1).sum()
+                )
+
+                medium = int(
+                    (
+                        (scores > q1)
+                        & (scores <= q2)
+                    ).sum()
+                )
+
+                high = int(
+                    (scores > q2).sum()
+                )
+
+                demand_map = {
+                    "Low": low,
+                    "Medium": medium,
+                    "High": high,
+                }
+
+    # --------------------------------------------------------
+    # Final table
+    # --------------------------------------------------------
+
+    result = []
+
+    for label in labels:
+
+        records = int(
+            demand_map.get(
+                label,
+                0,
+            )
+        )
+
+        share = (
+            records / total_count * 100
+            if total_count
+            else 0
+        )
+
+        result.append(
+            {
+                "Demand Level": label,
+                "Records": records,
+                "Share": round(
+                    share,
+                    1,
+                ),
+            }
+        )
+
+    return result
+
+
+# ============================================================
+# Historical context engine
+# ============================================================
+
+def _context_query(
+    table,
+    city,
+    hour,
+    day_name,
+    ride_types=None,
+    zone=None,
+):
+    """
+    Historical context engine.
+
+    Priority:
+
+    1. Zone + hour + actual weekday
+    2. Zone + hour
+    3. Zone + all times
+    4. City + hour + actual weekday
+    5. City + hour
+    6. City + all times
+
+    The exact weekday/hour combination is accepted even if
+    it contains only a small number of records.
+    """
+
+    if not table:
+        return {
+            "found": False,
+            "basis": "No match",
+            "sample_size": 0,
+        }
+
+    columns = get_table_columns(table)
+
+    clean_types = clean_ride_types(
+        ride_types
+    )
+
+    day_code = normalize_day_value(
+        day_name
+    )
+
+    # ========================================================
+    # Common city / ride-type filters
+    # ========================================================
+
+    base_conditions = []
+    base_params = []
+
+    if city:
+        base_conditions.append(
+            "City = ?"
+        )
+        base_params.append(city)
+
+    if clean_types:
 
         placeholders = ",".join(
-            "?"
-            for _ in ride_types
+            ["?"] * len(clean_types)
         )
 
-        query += (
-            f" AND Ride_Type "
-            f"IN ({placeholders})"
+        base_conditions.append(
+            f"Ride_Type IN ({placeholders})"
         )
 
-        params.extend(
-            ride_types
+        base_params.extend(
+            clean_types
         )
 
-    if weather:
+    if base_conditions:
+        base_where = (
+            " WHERE "
+            + " AND ".join(base_conditions)
+        )
+    else:
+        base_where = ""
 
-        query += """
-            AND Weather = ?
+    # ========================================================
+    # Candidate filters
+    # ========================================================
+
+    candidates = []
+
+    # --------------------------------------------------------
+    # Zone-level candidates
+    # --------------------------------------------------------
+
+    if (
+        zone
+        and "Zone" in columns
+    ):
+
+        # Zone + hour + actual weekday
+        if day_code is not None:
+
+            candidates.append(
+                (
+                    "Zone + hour + weekday",
+
+                    base_where
+                    + " AND Zone = ?"
+                    + " AND Hour_of_Day = ?"
+                    + " AND CAST(strftime('%w', Date) AS INTEGER) = ?",
+
+                    base_params
+                    + [
+                        zone,
+                        int(hour),
+                        day_code,
+                    ],
+                )
+            )
+
+        # Zone + hour
+        candidates.append(
+            (
+                "Zone + hour",
+
+                base_where
+                + " AND Zone = ?"
+                + " AND Hour_of_Day = ?",
+
+                base_params
+                + [
+                    zone,
+                    int(hour),
+                ],
+            )
+        )
+
+        # Zone + all times
+        candidates.append(
+            (
+                "Zone + all times",
+
+                base_where
+                + " AND Zone = ?",
+
+                base_params
+                + [zone],
+            )
+        )
+
+    # ========================================================
+    # City-level candidates
+    # ========================================================
+
+    # --------------------------------------------------------
+    # City + hour + actual weekday
+    # --------------------------------------------------------
+
+    if day_code is not None:
+
+        candidates.append(
+            (
+                "City + hour + weekday",
+
+                base_where
+                + " AND Hour_of_Day = ?"
+                + " AND CAST(strftime('%w', Date) AS INTEGER) = ?",
+
+                base_params
+                + [
+                    int(hour),
+                    day_code,
+                ],
+            )
+        )
+
+    # --------------------------------------------------------
+    # City + hour
+    # --------------------------------------------------------
+
+    candidates.append(
+        (
+            "City + hour",
+
+            base_where
+            + " AND Hour_of_Day = ?",
+
+            base_params
+            + [int(hour)],
+        )
+    )
+
+    # --------------------------------------------------------
+    # City + all times
+    # --------------------------------------------------------
+
+    candidates.append(
+        (
+            "City + all times",
+
+            base_where,
+
+            base_params,
+        )
+    )
+
+    # ========================================================
+    # Execute candidates
+    # ========================================================
+
+    for basis, where_clause, params in candidates:
+
+        count_query = f"""
+            SELECT
+                COUNT(*) AS n
+            FROM "{table}"
+            {where_clause}
         """
 
-        params.append(weather)
+        try:
+            count_result = read_sql(
+                count_query,
+                params,
+            )
 
-    return read_sql(
-        query,
-        tuple(params),
-    )
+            count = int(
+                count_result.iloc[0]["n"]
+            )
 
+        except Exception:
+            continue
 
-# ============================================================
-# CITY SUMMARY
-# ============================================================
+        # IMPORTANT:
+        # Any non-zero exact match is valid.
+        if count <= 0:
+            continue
 
-def get_city_summary_sql(city):
+        # ====================================================
+        # Main KPIs
+        # ====================================================
 
-    query = f"""
-        SELECT
-            City,
-            COUNT(*) AS Records,
-            AVG(Demand_Score)
-                AS Avg_Demand_Score,
-            AVG(Available_Drivers)
-                AS Avg_Available_Drivers,
-            AVG(Driver_Availability)
-                AS Avg_Driver_Availability,
-            AVG(Final_Fare)
-                AS Avg_Fare,
-            AVG(Fare_Per_KM)
-                AS Avg_Fare_Per_KM,
+        metrics_query = f"""
+            SELECT
 
-            {_normalized_rate_sql(
-                "Cancellation_Rate"
-            )}
-                AS Avg_Cancellation_Rate,
+                COUNT(*) AS Bookings,
 
-            {_normalized_rate_sql(
-                "Cancellation_Probability"
-            )}
-                AS Avg_Cancellation_Probability,
+                AVG(
+                    Cancellation_Rate
+                ) AS Cancellation_Rate,
 
-            AVG(Traffic_Delay)
-                AS Avg_Traffic_Delay
+                AVG(
+                    Ride_Distance_KM
+                ) AS Avg_Ride_Distance,
 
-        FROM rides
+                AVG(
+                    Final_Fare
+                ) AS Average_Fare,
 
-        WHERE City = ?
+                AVG(
+                    Demand_Score
+                ) AS Average_Demand_Score,
 
-        GROUP BY City
-    """
+                AVG(
+                    Available_Drivers
+                ) AS Average_Available_Drivers
 
-    return read_sql(
-        query,
-        (city,),
-    )
-
-
-# ============================================================
-# CITY DEMAND
-# ============================================================
-
-def get_city_demand_sql(
-    cities=None,
-    ride_type=None,
-):
-
-    query = """
-        SELECT
-            City,
-            COUNT(*) AS Records,
-            AVG(Demand_Score)
-                AS Average_Demand_Score,
-            AVG(Available_Drivers)
-                AS Average_Available_Drivers,
-            AVG(Driver_Availability)
-                AS Average_Driver_Availability
-        FROM rides
-        WHERE 1 = 1
-    """
-
-    params = []
-
-    if cities:
-
-        clause, values = _city_clause(
-            cities
-        )
-
-        query += clause
-        params.extend(values)
-
-    clause, values = _ride_type_clause(
-        ride_type
-    )
-
-    query += clause
-    params.extend(values)
-
-    query += """
-        GROUP BY City
-        ORDER BY Average_Demand_Score DESC
-    """
-
-    return read_sql(
-        query,
-        tuple(params),
-    )
-
-
-# ============================================================
-# HOURLY DEMAND
-# ============================================================
-
-def get_hourly_demand_sql(
-    city=None,
-    cities=None,
-    ride_type=None,
-):
-
-    query = """
-        SELECT
-            Hour_of_Day,
-            COUNT(*) AS Records,
-            AVG(Demand_Score)
-                AS Average_Demand_Score
-        FROM rides
-        WHERE 1 = 1
-    """
-
-    params = []
-
-    if cities is not None:
-
-        if not cities:
-            return pd.DataFrame()
-
-        clause, values = _city_clause(
-            cities
-        )
-
-        query += clause
-        params.extend(values)
-
-    elif city:
-
-        query += """
-            AND City = ?
+            FROM "{table}"
+            {where_clause}
         """
 
-        params.append(city)
+        try:
+            metrics = read_sql(
+                metrics_query,
+                params,
+            ).iloc[0]
 
-    clause, values = _ride_type_clause(
-        ride_type
-    )
+        except Exception:
+            metrics = pd.Series()
 
-    query += clause
-    params.extend(values)
+        # ====================================================
+        # Event signal
+        # ====================================================
 
-    query += """
-        GROUP BY Hour_of_Day
-        ORDER BY Hour_of_Day
-    """
+        event_query = f"""
+            SELECT
+                Event,
+                COUNT(*) AS Records
+            FROM "{table}"
+            {where_clause}
+            GROUP BY Event
+            ORDER BY Records DESC
+        """
 
-    return read_sql(
-        query,
-        tuple(params),
-    )
+        try:
+            events = read_sql(
+                event_query,
+                params,
+            )
+        except Exception:
+            events = pd.DataFrame()
 
+        if events.empty:
 
-# ============================================================
-# CITY EARNINGS
-# ============================================================
+            event_signal = "Limited"
 
-def get_city_earnings_sql(
-    cities=None,
-    ride_type=None,
-):
+        else:
 
-    query = """
-        SELECT
-            City,
-            Ride_Type,
-            COUNT(*) AS Records,
-            AVG(Final_Fare)
-                AS Average_Fare,
-            AVG(Fare_Per_KM)
-                AS Average_Fare_Per_KM,
-            AVG(Ride_Distance_KM)
-                AS Average_Ride_Distance
-        FROM rides
-        WHERE 1 = 1
-    """
+            event_values = (
+                events["Event"]
+                .astype(str)
+                .str.strip()
+                .str.lower()
+            )
 
-    params = []
+            non_event_values = {
+                "",
+                "none",
+                "no event",
+                "normal",
+                "nan",
+            }
 
-    if cities:
+            event_records = int(
+                events.loc[
+                    ~event_values.isin(
+                        non_event_values
+                    ),
+                    "Records",
+                ].sum()
+            )
 
-        clause, values = _city_clause(
-            cities
+            if event_records > 0:
+                event_signal = "Present"
+            else:
+                event_signal = "Limited"
+
+        # ====================================================
+        # Demand breakdown
+        # ====================================================
+
+        demand_breakdown = (
+            build_demand_breakdown(
+                table,
+                where_clause,
+                params,
+                count,
+            )
         )
 
-        query += clause
-        params.extend(values)
+        # ====================================================
+        # Return result
+        # ====================================================
 
-    clause, values = _ride_type_clause(
-        ride_type
-    )
+        return {
+            "found": True,
 
-    query += clause
-    params.extend(values)
+            "basis": basis,
 
-    query += """
-        GROUP BY
-            City,
-            Ride_Type
-        ORDER BY
-            City,
-            Ride_Type
-    """
+            "sample_size": count,
 
-    return read_sql(
-        query,
-        tuple(params),
-    )
+            "bookings": int(
+                metrics.get(
+                    "Bookings",
+                    count,
+                )
+                if pd.notna(
+                    metrics.get(
+                        "Bookings",
+                        count,
+                    )
+                )
+                else count
+            ),
+
+            "cancellation_rate": float(
+                metrics.get(
+                    "Cancellation_Rate",
+                    0,
+                )
+                if pd.notna(
+                    metrics.get(
+                        "Cancellation_Rate",
+                        0,
+                    )
+                )
+                else 0
+            ),
+
+            "avg_ride_distance": float(
+                metrics.get(
+                    "Avg_Ride_Distance",
+                    0,
+                )
+                if pd.notna(
+                    metrics.get(
+                        "Avg_Ride_Distance",
+                        0,
+                    )
+                )
+                else 0
+            ),
+
+            "average_fare": float(
+                metrics.get(
+                    "Average_Fare",
+                    0,
+                )
+                if pd.notna(
+                    metrics.get(
+                        "Average_Fare",
+                        0,
+                    )
+                )
+                else 0
+            ),
+
+            "average_demand_score": float(
+                metrics.get(
+                    "Average_Demand_Score",
+                    0,
+                )
+                if pd.notna(
+                    metrics.get(
+                        "Average_Demand_Score",
+                        0,
+                    )
+                )
+                else 0
+            ),
+
+            "average_available_drivers": float(
+                metrics.get(
+                    "Average_Available_Drivers",
+                    0,
+                )
+                if pd.notna(
+                    metrics.get(
+                        "Average_Available_Drivers",
+                        0,
+                    )
+                )
+                else 0
+            ),
+
+            "event_signal": event_signal,
+
+            "demand_breakdown": demand_breakdown,
+
+            "day_code_used": day_code,
+        }
+
+    # ========================================================
+    # Nothing found
+    # ========================================================
+
+    return {
+        "found": False,
+        "basis": "No match",
+        "sample_size": 0,
+    }
 
 
 # ============================================================
-# CITY CANCELLATIONS
-# ============================================================
-
-def get_city_cancellations_sql(
-    cities=None,
-    ride_type=None,
-):
-
-    query = f"""
-        SELECT
-            City,
-            COUNT(*) AS Records,
-
-            {_normalized_rate_sql(
-                "Cancellation_Rate"
-            )}
-                AS Average_Cancellation_Rate,
-
-            {_normalized_rate_sql(
-                "Cancellation_Probability"
-            )}
-                AS Average_Cancellation_Probability,
-
-            AVG(Traffic_Delay)
-                AS Average_Traffic_Delay
-
-        FROM rides
-
-        WHERE 1 = 1
-    """
-
-    params = []
-
-    if cities:
-
-        clause, values = _city_clause(
-            cities
-        )
-
-        query += clause
-        params.extend(values)
-
-    clause, values = _ride_type_clause(
-        ride_type
-    )
-
-    query += clause
-    params.extend(values)
-
-    query += """
-        GROUP BY City
-        ORDER BY Average_Cancellation_Rate DESC
-    """
-
-    return read_sql(
-        query,
-        tuple(params),
-    )
-
-
-# ============================================================
-# CITY HISTORICAL CONTEXT
+# City context
 # ============================================================
 
 def get_city_context_sql(
@@ -570,282 +1010,36 @@ def get_city_context_sql(
     hour,
     day_name,
     ride_type="All Ride Types",
-    min_records=30,
+    min_records=1,
 ):
+    """
+    City-level historical context.
 
-    ride_clause, ride_params = (
-        _ride_type_clause(
-            ride_type
-        )
+    min_records is retained for compatibility with main.py,
+    but is NOT used as a minimum threshold.
+    """
+
+    table = get_fairfare_table()
+
+    if table is None:
+        return {
+            "found": False,
+            "basis": "No match",
+            "sample_size": 0,
+        }
+
+    return _context_query(
+        table=table,
+        city=city,
+        hour=hour,
+        day_name=day_name,
+        ride_types=ride_type,
+        zone=None,
     )
-
-    candidates = [
-
-        (
-            "City + hour + weekday",
-            """
-            AND Hour_of_Day = ?
-            AND Day_of_Week = ?
-            """,
-            [hour, day_name],
-        ),
-
-        (
-            "City + hour",
-            """
-            AND Hour_of_Day = ?
-            """,
-            [hour],
-        ),
-
-        (
-            "City + all times",
-            "",
-            [],
-        ),
-    ]
-
-    for (
-        basis,
-        extra_clause,
-        extra_params,
-    ) in candidates:
-
-        count_query = f"""
-            SELECT COUNT(*) AS n
-            FROM rides
-            WHERE City = ?
-            {ride_clause}
-            {extra_clause}
-        """
-
-        params = [
-            city,
-            *ride_params,
-            *extra_params,
-        ]
-
-        count_df = read_sql(
-            count_query,
-            tuple(params),
-        )
-
-        count = (
-            int(
-                count_df.loc[
-                    0,
-                    "n",
-                ]
-            )
-            if not count_df.empty
-            else 0
-        )
-
-        if (
-            count >= min_records
-            or basis == "City + all times"
-        ):
-
-            query = f"""
-                SELECT
-                    COUNT(*) AS bookings,
-
-                    AVG(Demand_Score)
-                        AS avg_demand_score,
-
-                    AVG(Available_Drivers)
-                        AS avg_available_drivers,
-
-                    AVG(Driver_Availability)
-                        AS avg_driver_availability,
-
-                    AVG(Final_Fare)
-                        AS avg_fare,
-
-                    AVG(Fare_Per_KM)
-                        AS avg_fare_per_km,
-
-                    AVG(Ride_Distance_KM)
-                        AS avg_ride_km,
-
-                    {_normalized_rate_sql(
-                        "Cancellation_Rate"
-                    )}
-                        AS cancellation_rate,
-
-                    {_normalized_rate_sql(
-                        "Cancellation_Probability"
-                    )}
-                        AS cancellation_probability,
-
-                    AVG(Traffic_Delay)
-                        AS avg_traffic_delay
-
-                FROM rides
-
-                WHERE City = ?
-                {ride_clause}
-                {extra_clause}
-            """
-
-            result = read_sql(
-                query,
-                tuple(params),
-            )
-
-            if (
-                result.empty
-                or pd.isna(
-                    result.loc[
-                        0,
-                        "bookings",
-                    ]
-                )
-            ):
-                continue
-
-            row = (
-                result
-                .iloc[0]
-                .to_dict()
-            )
-
-            row.update(
-                {
-                    "found": count > 0,
-                    "city": city,
-                    "hour": int(hour),
-                    "day_name": day_name,
-                    "ride_type": ride_type,
-                    "basis": basis,
-                    "sample_size": count,
-                    "completed_rides_estimated": max(
-                        0.0,
-                        float(
-                            row["bookings"]
-                        )
-                        * (
-                            1.0
-                            - float(
-                                row[
-                                    "cancellation_rate"
-                                ]
-                            )
-                            / 100.0
-                        ),
-                    ),
-                }
-            )
-
-            demand_query = f"""
-                SELECT
-                    Demand_Level,
-                    COUNT(*) AS Records
-                FROM rides
-                WHERE City = ?
-                {ride_clause}
-                {extra_clause}
-                GROUP BY Demand_Level
-            """
-
-            demand = read_sql(
-                demand_query,
-                tuple(params),
-            )
-
-            demand_map = {
-                "Low": 0,
-                "Medium": 0,
-                "High": 0,
-            }
-
-            for (
-                _,
-                demand_row,
-            ) in demand.iterrows():
-
-                label = str(
-                    demand_row[
-                        "Demand_Level"
-                    ]
-                )
-
-                if label in demand_map:
-                    demand_map[
-                        label
-                    ] = int(
-                        demand_row[
-                            "Records"
-                        ]
-                    )
-
-            total = max(
-                1,
-                count,
-            )
-
-            row[
-                "demand_breakdown"
-            ] = [
-
-                {
-                    "Demand Level": label,
-                    "Records": demand_map[
-                        label
-                    ],
-                    "Share": (
-                        demand_map[
-                            label
-                        ]
-                        / total
-                        * 100.0
-                    ),
-                }
-
-                for label in (
-                    "Low",
-                    "Medium",
-                    "High",
-                )
-            ]
-
-            weather_query = f"""
-                SELECT
-                    Weather,
-                    COUNT(*) AS Records
-                FROM rides
-                WHERE City = ?
-                {ride_clause}
-                {extra_clause}
-                GROUP BY Weather
-                ORDER BY Records DESC
-            """
-
-            row[
-                "weather_mix"
-            ] = (
-                read_sql(
-                    weather_query,
-                    tuple(params),
-                )
-                .to_dict(
-                    orient="records"
-                )
-            )
-
-            return row
-
-    return {
-        "found": False,
-        "message": (
-            f"No historical records "
-            f"are available for {city}."
-        ),
-    }
 
 
 # ============================================================
-# ZONE HISTORICAL CONTEXT
+# Zone context
 # ============================================================
 
 def get_zone_context_sql(
@@ -854,740 +1048,420 @@ def get_zone_context_sql(
     hour,
     day_name,
     ride_type="All Ride Types",
-    min_records=30,
+    min_records=1,
 ):
+    """
+    Zone-level historical context.
 
-    ride_clause, ride_params = (
-        _ride_type_clause(
-            ride_type
-        )
-    )
-
-    candidates = [
-
-        (
-            "Zone + hour + weekday",
-            """
-            AND Hour_of_Day = ?
-            AND Day_of_Week = ?
-            """,
-            [hour, day_name],
-        ),
-
-        (
-            "Zone + hour",
-            """
-            AND Hour_of_Day = ?
-            """,
-            [hour],
-        ),
-
-        (
-            "Zone + all times",
-            "",
-            [],
-        ),
-    ]
-
-    for (
-        basis,
-        extra_clause,
-        extra_params,
-    ) in candidates:
-
-        count_query = f"""
-            SELECT COUNT(*) AS n
-            FROM rides_zoned
-            WHERE City = ?
-              AND Zone = ?
-            {ride_clause}
-            {extra_clause}
-        """
-
-        params = [
-            city,
-            zone,
-            *ride_params,
-            *extra_params,
-        ]
-
-        count_df = read_sql(
-            count_query,
-            tuple(params),
-        )
-
-        count = (
-            int(
-                count_df.loc[
-                    0,
-                    "n",
-                ]
-            )
-            if not count_df.empty
-            else 0
-        )
-
-        if (
-            count >= min_records
-            or basis == "Zone + all times"
-        ):
-
-            if count == 0:
-                break
-
-            query = f"""
-                SELECT
-                    COUNT(*) AS bookings,
-
-                    AVG(Demand_Score)
-                        AS avg_demand_score,
-
-                    AVG(Available_Drivers)
-                        AS avg_available_drivers,
-
-                    AVG(Driver_Availability)
-                        AS avg_driver_availability,
-
-                    AVG(Final_Fare)
-                        AS avg_fare,
-
-                    AVG(Fare_Per_KM)
-                        AS avg_fare_per_km,
-
-                    AVG(Ride_Distance_KM)
-                        AS avg_ride_km,
-
-                    {_normalized_rate_sql(
-                        "Cancellation_Rate"
-                    )}
-                        AS cancellation_rate,
-
-                    {_normalized_rate_sql(
-                        "Cancellation_Probability"
-                    )}
-                        AS cancellation_probability,
-
-                    AVG(Traffic_Delay)
-                        AS avg_traffic_delay
-
-                FROM rides_zoned
-
-                WHERE City = ?
-                  AND Zone = ?
-                {ride_clause}
-                {extra_clause}
-            """
-
-            result = read_sql(
-                query,
-                tuple(params),
-            )
-
-            if result.empty:
-                continue
-
-            row = (
-                result
-                .iloc[0]
-                .to_dict()
-            )
-
-            row.update(
-                {
-                    "found": True,
-                    "city": city,
-                    "zone": zone,
-                    "hour": int(hour),
-                    "day_name": day_name,
-                    "ride_type": ride_type,
-                    "basis": basis,
-                    "sample_size": count,
-                    "completed_rides_estimated": max(
-                        0.0,
-                        float(
-                            row["bookings"]
-                        )
-                        * (
-                            1.0
-                            - float(
-                                row[
-                                    "cancellation_rate"
-                                ]
-                            )
-                            / 100.0
-                        ),
-                    ),
-                }
-            )
-
-            demand_query = f"""
-                SELECT
-                    Demand_Level,
-                    COUNT(*) AS Records
-                FROM rides_zoned
-                WHERE City = ?
-                  AND Zone = ?
-                {ride_clause}
-                {extra_clause}
-                GROUP BY Demand_Level
-            """
-
-            demand = read_sql(
-                demand_query,
-                tuple(params),
-            )
-
-            demand_map = {
-                "Low": 0,
-                "Medium": 0,
-                "High": 0,
-            }
-
-            for (
-                _,
-                demand_row,
-            ) in demand.iterrows():
-
-                label = str(
-                    demand_row[
-                        "Demand_Level"
-                    ]
-                )
-
-                if label in demand_map:
-                    demand_map[
-                        label
-                    ] = int(
-                        demand_row[
-                            "Records"
-                        ]
-                    )
-
-            total = max(
-                1,
-                count,
-            )
-
-            row[
-                "demand_breakdown"
-            ] = [
-
-                {
-                    "Demand Level": label,
-                    "Records": demand_map[
-                        label
-                    ],
-                    "Share": (
-                        demand_map[
-                            label
-                        ]
-                        / total
-                        * 100.0
-                    ),
-                }
-
-                for label in (
-                    "Low",
-                    "Medium",
-                    "High",
-                )
-            ]
-
-            weather_query = f"""
-                SELECT
-                    Weather,
-                    COUNT(*) AS Records
-                FROM rides_zoned
-                WHERE City = ?
-                  AND Zone = ?
-                {ride_clause}
-                {extra_clause}
-                GROUP BY Weather
-                ORDER BY Records DESC
-            """
-
-            row[
-                "weather_mix"
-            ] = (
-                read_sql(
-                    weather_query,
-                    tuple(params),
-                )
-                .to_dict(
-                    orient="records"
-                )
-            )
-
-            return row
-
-    return {
-        "found": False,
-        "message": (
-            f"No zone-level records "
-            f"are available for "
-            f"{zone}, {city}."
-        ),
-    }
-
-
-# ============================================================
-# ZONE EVENT SIGNAL
-# ============================================================
-
-def get_zone_event_signal_sql(
-    city,
-    zone,
-    ride_type="All Ride Types",
-):
-
-    query = """
-        SELECT
-            CASE
-                WHEN Event = 'No Event Recorded'
-                THEN 0
-                ELSE 1
-            END AS Is_Event,
-
-            AVG(Demand_Score)
-                AS Avg_Demand_Score
-
-        FROM rides_zoned
-
-        WHERE City = ?
-          AND Zone = ?
+    If the zone has no assigned records, main.py can fall
+    back to city-level context.
     """
 
-    params = [
-        city,
-        zone,
-    ]
+    table = get_fairfare_table()
 
-    clause, values = (
-        _ride_type_clause(
-            ride_type
-        )
-    )
-
-    query += clause
-    params.extend(values)
-
-    query += """
-        GROUP BY Is_Event
-    """
-
-    data = read_sql(
-        query,
-        tuple(params),
-    )
-
-    if data.empty:
+    if table is None:
         return {
-            "event_avg_demand": None,
-            "normal_avg_demand": None,
-            "demand_delta_pct": None,
+            "found": False,
+            "basis": "No match",
+            "sample_size": 0,
         }
 
-    event_avg = None
-    normal_avg = None
+    columns = get_table_columns(table)
 
-    for _, row in data.iterrows():
+    if "Zone" not in columns:
+        return {
+            "found": False,
+            "basis": "Zone unavailable",
+            "sample_size": 0,
+        }
 
-        if int(
-            row["Is_Event"]
-        ) == 1:
-
-            event_avg = float(
-                row[
-                    "Avg_Demand_Score"
-                ]
-            )
-
-        else:
-
-            normal_avg = float(
-                row[
-                    "Avg_Demand_Score"
-                ]
-            )
-
-    delta = None
-
-    if (
-        event_avg is not None
-        and normal_avg not in (
-            None,
-            0,
-        )
-    ):
-
-        delta = (
-            event_avg
-            - normal_avg
-        ) / abs(
-            normal_avg
-        ) * 100.0
-
-    return {
-        "event_avg_demand": event_avg,
-        "normal_avg_demand": normal_avg,
-        "demand_delta_pct": delta,
-    }
+    return _context_query(
+        table=table,
+        city=city,
+        hour=hour,
+        day_name=day_name,
+        ride_types=ride_type,
+        zone=zone,
+    )
 
 
 # ============================================================
-# ZONE DEMAND SCORES
+# FairFare rows
 # ============================================================
 
-def get_zone_demand_scores_sql(
-    city,
-    hour,
-    day_name,
+def get_fairfare_rows(
+    city=None,
+    hour=None,
+    day_name=None,
     ride_type="All Ride Types",
+    zone=None,
+    limit=5000,
 ):
-
-    clause, values = (
-        _ride_type_clause(
-            ride_type
-        )
-    )
-
-    candidates = [
-
-        (
-            "Zone + hour + weekday",
-            """
-            AND Hour_of_Day = ?
-            AND Day_of_Week = ?
-            """,
-            [hour, day_name],
-        ),
-
-        (
-            "Zone + hour",
-            """
-            AND Hour_of_Day = ?
-            """,
-            [hour],
-        ),
-
-        (
-            "Zone + all times",
-            "",
-            [],
-        ),
-    ]
-
-    for (
-        basis,
-        extra_clause,
-        extra_params,
-    ) in candidates:
-
-        query = f"""
-            SELECT
-                Zone,
-
-                AVG(Demand_Score)
-                    AS Average_Demand_Score,
-
-                COUNT(*) AS Records
-
-            FROM rides_zoned
-
-            WHERE City = ?
-            {clause}
-            {extra_clause}
-
-            GROUP BY Zone
-        """
-
-        params = [
-            city,
-            *values,
-            *extra_params,
-        ]
-
-        result = read_sql(
-            query,
-            tuple(params),
-        )
-
-        if not result.empty:
-
-            result["basis"] = basis
-
-            return result
-
-    return pd.DataFrame()
-
-
-# ============================================================
-# ZONE FILTER
-# ============================================================
-
-def _zone_clause(zones):
-
-    if zones is None:
-        return "", []
-
-    zones = [
-        str(zone)
-        for zone in zones
-        if zone
-    ]
-
-    if not zones:
-        return (
-            " AND 1 = 0",
-            [],
-        )
-
-    placeholders = ",".join(
-        "?"
-        for _ in zones
-    )
-
-    return (
-        f" AND Zone IN ({placeholders})",
-        zones,
-    )
-
-
-# ============================================================
-# ZONE ROWS
-# ============================================================
-
-def get_zone_rows_sql(
-    city,
-    zones=None,
-    ride_type="All Ride Types",
-):
-
-    query = """
-        SELECT *
-        FROM rides_zoned
-        WHERE City = ?
+    """
+    Return historical rows using the same filters as the
+    main historical context.
     """
 
-    params = [
-        city
+    table = get_fairfare_table()
+
+    if table is None:
+        return pd.DataFrame()
+
+    where_clause, params = build_base_filters(
+        city=city,
+        hour=hour,
+        day_name=day_name,
+        ride_types=ride_type,
+        zone=zone,
+    )
+
+    query = f"""
+        SELECT *
+        FROM "{table}"
+        {where_clause}
+        LIMIT ?
+    """
+
+    params = params + [
+        int(limit)
     ]
-
-    clause, values = (
-        _zone_clause(
-            zones
-        )
-    )
-
-    query += clause
-    params.extend(values)
-
-    clause, values = (
-        _ride_type_clause(
-            ride_type
-        )
-    )
-
-    query += clause
-    params.extend(values)
 
     return read_sql(
         query,
-        tuple(params),
+        params,
     )
 
 
 # ============================================================
-# ZONE DEMAND
+# Hourly demand
 # ============================================================
 
-def get_zone_demand_sql(
-    city,
-    zones=None,
+def get_hourly_demand_sql(
+    city=None,
     ride_type="All Ride Types",
 ):
-
-    query = """
-        SELECT
-            Zone,
-            COUNT(*) AS Records,
-
-            AVG(Demand_Score)
-                AS Average_Demand_Score,
-
-            AVG(Available_Drivers)
-                AS Average_Available_Drivers,
-
-            AVG(Driver_Availability)
-                AS Average_Driver_Availability
-
-        FROM rides_zoned
-
-        WHERE City = ?
+    """
+    Historical demand by hour.
     """
 
-    params = [
-        city
-    ]
+    table = get_fairfare_table()
 
-    clause, values = (
-        _zone_clause(
-            zones
+    if table is None:
+        return pd.DataFrame()
+
+    conditions = []
+    params = []
+
+    if city:
+        conditions.append(
+            "City = ?"
         )
+        params.append(city)
+
+    ride_types = clean_ride_types(
+        ride_type
     )
 
-    query += clause
-    params.extend(values)
+    if ride_types:
 
-    clause, values = (
-        _ride_type_clause(
-            ride_type
+        placeholders = ",".join(
+            ["?"] * len(ride_types)
         )
+
+        conditions.append(
+            f"Ride_Type IN ({placeholders})"
+        )
+
+        params.extend(
+            ride_types
+        )
+
+    where_clause = ""
+
+    if conditions:
+        where_clause = (
+            " WHERE "
+            + " AND ".join(conditions)
+        )
+
+    query = f"""
+        SELECT
+
+            Hour_of_Day,
+
+            COUNT(*) AS Records,
+
+            AVG(
+                Demand_Score
+            ) AS Average_Demand_Score
+
+        FROM "{table}"
+
+        {where_clause}
+
+        GROUP BY Hour_of_Day
+
+        ORDER BY Hour_of_Day
+    """
+
+    return read_sql(
+        query,
+        params,
     )
 
-    query += clause
-    params.extend(values)
 
-    query += """
-        GROUP BY Zone
+# ============================================================
+# City demand comparison
+# ============================================================
+
+def get_city_demand_sql(
+    ride_type="All Ride Types",
+):
+    """
+    Historical demand comparison across cities.
+    """
+
+    table = get_fairfare_table()
+
+    if table is None:
+        return pd.DataFrame()
+
+    ride_types = clean_ride_types(
+        ride_type
+    )
+
+    conditions = []
+    params = []
+
+    if ride_types:
+
+        placeholders = ",".join(
+            ["?"] * len(ride_types)
+        )
+
+        conditions.append(
+            f"Ride_Type IN ({placeholders})"
+        )
+
+        params.extend(
+            ride_types
+        )
+
+    where_clause = ""
+
+    if conditions:
+        where_clause = (
+            " WHERE "
+            + " AND ".join(conditions)
+        )
+
+    query = f"""
+        SELECT
+
+            City,
+
+            COUNT(*) AS Records,
+
+            AVG(
+                Demand_Score
+            ) AS Average_Demand_Score
+
+        FROM "{table}"
+
+        {where_clause}
+
+        GROUP BY City
+
         ORDER BY Average_Demand_Score DESC
     """
 
     return read_sql(
         query,
-        tuple(params),
+        params,
     )
 
 
 # ============================================================
-# ZONE EARNINGS
+# Cancellation analysis
 # ============================================================
 
-def get_zone_earnings_sql(
-    city,
-    zones=None,
+def get_city_cancellations_sql(
+    city=None,
     ride_type="All Ride Types",
 ):
-
-    query = """
-        SELECT
-            Zone,
-            Ride_Type,
-            COUNT(*) AS Records,
-
-            AVG(Final_Fare)
-                AS Average_Fare,
-
-            AVG(Fare_Per_KM)
-                AS Average_Fare_Per_KM,
-
-            AVG(Ride_Distance_KM)
-                AS Average_Ride_Distance
-
-        FROM rides_zoned
-
-        WHERE City = ?
+    """
+    Historical cancellation analysis.
     """
 
-    params = [
-        city
-    ]
+    table = get_fairfare_table()
 
-    clause, values = (
-        _zone_clause(
-            zones
+    if table is None:
+        return pd.DataFrame()
+
+    conditions = []
+    params = []
+
+    if city:
+        conditions.append(
+            "City = ?"
         )
+        params.append(city)
+
+    ride_types = clean_ride_types(
+        ride_type
     )
 
-    query += clause
-    params.extend(values)
+    if ride_types:
 
-    clause, values = (
-        _ride_type_clause(
-            ride_type
+        placeholders = ",".join(
+            ["?"] * len(ride_types)
         )
-    )
 
-    query += clause
-    params.extend(values)
+        conditions.append(
+            f"Ride_Type IN ({placeholders})"
+        )
 
-    query += """
-        GROUP BY
-            Zone,
-            Ride_Type
+        params.extend(
+            ride_types
+        )
 
-        ORDER BY
-            Zone,
-            Ride_Type
-    """
+    where_clause = ""
 
-    return read_sql(
-        query,
-        tuple(params),
-    )
-
-
-# ============================================================
-# ZONE CANCELLATIONS
-# ============================================================
-
-def get_zone_cancellations_sql(
-    city,
-    zones=None,
-    ride_type="All Ride Types",
-):
+    if conditions:
+        where_clause = (
+            " WHERE "
+            + " AND ".join(conditions)
+        )
 
     query = f"""
         SELECT
-            Zone,
+
+            City,
+
             COUNT(*) AS Records,
 
-            {_normalized_rate_sql(
-                "Cancellation_Rate"
-            )}
-                AS Average_Cancellation_Rate,
+            AVG(
+                Cancellation_Rate
+            ) AS Average_Cancellation_Rate,
 
-            {_normalized_rate_sql(
-                "Cancellation_Probability"
-            )}
-                AS Average_Cancellation_Probability,
+            AVG(
+                Cancellation_Probability
+            ) AS Average_Cancellation_Probability
 
-            AVG(Traffic_Delay)
-                AS Average_Traffic_Delay
+        FROM "{table}"
 
-        FROM rides_zoned
+        {where_clause}
 
-        WHERE City = ?
-    """
+        GROUP BY City
 
-    params = [
-        city
-    ]
-
-    clause, values = (
-        _zone_clause(
-            zones
-        )
-    )
-
-    query += clause
-    params.extend(values)
-
-    clause, values = (
-        _ride_type_clause(
-            ride_type
-        )
-    )
-
-    query += clause
-    params.extend(values)
-
-    query += """
-        GROUP BY Zone
         ORDER BY Average_Cancellation_Rate DESC
     """
 
     return read_sql(
         query,
-        tuple(params),
+        params,
     )
+
+
+# ============================================================
+# Nearby / zone demand
+# ============================================================
+
+def get_zone_nearby_demand_sql(
+    city,
+    zone,
+    hour,
+    day_name,
+    ride_type="All Ride Types",
+):
+    """
+    Historical demand for a selected zone, hour and actual
+    weekday from Date.
+    """
+
+    table = get_fairfare_table()
+
+    if table is None:
+        return pd.DataFrame()
+
+    columns = get_table_columns(table)
+
+    if "Zone" not in columns:
+        return pd.DataFrame()
+
+    conditions = [
+        "City = ?",
+        "Zone = ?",
+        "Hour_of_Day = ?",
+    ]
+
+    params = [
+        city,
+        zone,
+        int(hour),
+    ]
+
+    # --------------------------------------------------------
+    # Actual weekday from Date
+    # --------------------------------------------------------
+
+    conditions, params = add_weekday_filter(
+        conditions,
+        params,
+        day_name,
+    )
+
+    # --------------------------------------------------------
+    # Ride type
+    # --------------------------------------------------------
+
+    ride_types = clean_ride_types(
+        ride_type
+    )
+
+    if ride_types:
+
+        placeholders = ",".join(
+            ["?"] * len(ride_types)
+        )
+
+        conditions.append(
+            f"Ride_Type IN ({placeholders})"
+        )
+
+        params.extend(
+            ride_types
+        )
+
+    where_clause = (
+        " WHERE "
+        + " AND ".join(conditions)
+    )
+
+    query = f"""
+        SELECT
+
+            Demand_Level,
+
+            COUNT(*) AS Records,
+
+            AVG(
+                Demand_Score
+            ) AS Average_Demand_Score
+
+        FROM "{table}"
+
+        {where_clause}
+
+        GROUP BY Demand_Level
+
+        ORDER BY Records DESC
+    """
+
+    try:
+        return read_sql(
+            query,
+            params,
+        )
+    except Exception:
+        return pd.DataFrame()
