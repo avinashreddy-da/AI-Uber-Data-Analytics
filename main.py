@@ -1424,7 +1424,7 @@ def get_live_traffic(city):
 
     try:
         response = requests.get(
-            "https://api.tomtom.com/traffic/services/4/flowSegmentData/relative0/10/json",
+            "https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json",
             params={
                 "point": (
                     f"{coords['lat']},"
@@ -1490,12 +1490,23 @@ def get_live_traffic(city):
             ),
         }
 
-    except Exception:
+    except requests.exceptions.HTTPError as e:
         return {
             "available": False,
-            "message": (
-                "Live traffic request failed."
-            ),
+            "message": f"TomTom API error: {e}",
+        }
+
+    except requests.exceptions.RequestException as e:
+
+        return {
+            "available": False,
+            "message": f"TomTom connection error: {e}",
+        }
+
+    except Exception as e:
+        return {
+            "available": False,
+            "message": f"Traffic processing error: {e}",
         }
 
 
@@ -3085,18 +3096,17 @@ def render_live_context(city):
         )
 
     else:
-        values.extend(
-            [
-                (
-                    "Traffic Delay",
-                    "Not configured",
-                ),
-                (
-                    "Current Speed",
-                    "Not configured",
-                ),
-            ]
-        )
+        traffic_message = traffic.get(
+        "message",
+        "Live traffic unavailable.",
+    )
+    
+    values.extend([
+        ("Traffic Delay", "Unavailable"),
+        ("Current Speed", "Unavailable"),
+    ])
+
+    
 
     for col, (
         label,
