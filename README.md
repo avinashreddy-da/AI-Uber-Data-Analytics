@@ -418,7 +418,7 @@ mobilitylens/
 │   ├── home.png
 │   └── india-explorer.png
 │
-├── main.py
+├── app.py
 ├── database.py
 ├── create_database.py
 ├── requirements.txt
@@ -514,7 +514,7 @@ For Streamlit Cloud, API credentials should be stored through the application's 
 Start the Streamlit application with:
 
 ```bash
-streamlit run main.py
+streamlit run app.py
 
 ```
 
@@ -534,7 +534,7 @@ The deployment requires:
 2. The project files
 3. `requirements.txt`
 4. Streamlit Cloud Secrets for API credentials
-5. `main.py` as the application entry point
+5. `app.py` as the application entry point
 
 The application can continue to provide historical analytics even when optional external APIs are unavailable.
 

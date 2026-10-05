@@ -1015,7 +1015,7 @@ def get_city_context_sql(
     """
     City-level historical context.
 
-    min_records is retained for compatibility with main.py,
+    min_records is retained for compatibility with app.py,
     but is NOT used as a minimum threshold.
     """
 
@@ -1053,7 +1053,7 @@ def get_zone_context_sql(
     """
     Zone-level historical context.
 
-    If the zone has no assigned records, main.py can fall
+    If the zone has no assigned records, app.py can fall
     back to city-level context.
     """
 
