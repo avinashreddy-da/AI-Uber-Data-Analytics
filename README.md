@@ -1,10 +1,8 @@
 # 🚕 MobilityLens — Ride Demand, Fare & Cancellation Analytics with a Generative AI Assistant
 
+🔗 **Live Demo:** https://ai-uber-data-analytics-qy6uhhjyq9mgvet3qoxrhy.streamlit.app/
+
 **MobilityLens** is an **AI + Data Analytics web application** for exploring historical ride-demand, fare, cancellation, driver availability, and city-level mobility patterns using synthetic/demo ride-hailing data.
-
-The application combines **Python, Pandas, Streamlit, SQLite database creation, APIs, and Google Gemini Generative AI** to turn historical mobility data into interactive analytical views and concise natural-language explanations.
-
-> **Important:** The historical ride data used by MobilityLens is synthetic/generated data for demonstration and portfolio purposes. It is not official Uber, Ola, or other ride-hailing operational data.
 
 ---
 
@@ -542,35 +540,32 @@ The application can continue to provide historical analytics even when optional 
 
 ---
 
-
-
 ## 📸 Screenshots
-
-
 
 ### Home
 
-![MobilityLens Home](https://chatgpt.com/c/Screenshots/home.png)
+![MobilityLens Home](Screenshots/home.png)
 
 ### India Explorer
 
-![India Explorer](https://chatgpt.com/c/Screenshots/india-explorer.png)
+![India Explorer](Screenshots/india-explorer.png)
 
 ### Demand Patterns
 
-![Demand Patterns](https://chatgpt.com/c/Screenshots/demand-patterns.png)
+![Demand Patterns](Screenshots/demand-patterns.png)
 
 ### Historical Earnings
 
-![Historical Earnings](https://chatgpt.com/c/Screenshots/historical-earnings.png)
+![Historical Earnings](Screenshots/historical-earnings.png)
 
 ### Cancellations
 
-![Cancellations](https://chatgpt.com/c/Screenshots/cancellations.png)
+![Cancellations](Screenshots/cancellations.png)
 
 ### AI Assistant
 
-![AI Assistant](https://chatgpt.com/c/Screenshots/ai-assistant.png)
+![AI Assistant](Screenshots/ai-assistant.png)
+
 
 ---
 
