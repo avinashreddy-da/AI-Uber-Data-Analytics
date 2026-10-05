@@ -1,5 +1,6 @@
 # 🚕 MobilityLens — Ride Demand, Fare & Cancellation Analytics with a Generative AI Assistant
 
+🚀 **Live Demo:** https://mobilitylens.streamlit.app/
 
 **MobilityLens** is an **AI + Data Analytics web application** for exploring historical ride-demand, fare, cancellation, driver availability, and city-level mobility patterns using synthetic/demo ride-hailing data.
 
