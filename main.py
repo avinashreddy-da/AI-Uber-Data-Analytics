@@ -314,14 +314,16 @@ st.markdown(
     }
 
     div[data-testid="stMarkdownContainer"] p,
-    div[data-testid="stMarkdownContainer"] span,
-    div[data-testid="stMarkdownContainer"] strong,
-    div[data-testid="stCaptionContainer"] p,
-    div[data-testid="stCaptionContainer"] span,
-    div[data-testid="stText"] p,
-    div[data-testid="stText"] span {
-        color: #f8fafc !important;
-    }
+div[data-testid="stMarkdownContainer"] span,
+div[data-testid="stMarkdownContainer"] strong,
+div[data-testid="stMarkdownContainer"] li,
+div[data-testid="stMarkdownContainer"] li *,
+div[data-testid="stCaptionContainer"] p,
+div[data-testid="stCaptionContainer"] span,
+div[data-testid="stText"] p,
+div[data-testid="stText"] span {
+    color: #f8fafc !important;
+}
 
     div[data-testid="stSelectbox"] label,
     div[data-testid="stSelectbox"] label *,
@@ -2935,14 +2937,22 @@ Available evidence:
 
 Rules:
 - Use historical recorded evidence only.
-- Clearly call FairFare synthetic/generated when discussing its numbers.
-- Never present synthetic data as official Uber/Ola data.
-- Never predict future demand, future earnings, or cancellation outcomes.
-- Never tell the driver where to go or whether they should drive.
-- Explain what the recorded data shows and mention sample size when relevant.
+- Answer in 3 to 4 bullets, about 80 to 100 words in total, followed by one short line starting with "Overall". Do not list or repeat KPI values one by one.
+- Each bullet explains one business insight about the most relevant metrics or patterns in the provided evidence. Use at most two numbers per bullet.
+- When a city average is available and useful, compare the place with the city average and give both values, for example "3.25% vs 4.95%".
+- Lead with the most important pattern. Skip metrics that show nothing notable.
+- Do not describe demand as moderate, strong, or weak unless the evidence supports it. Prefer evidence-based wording such as "slightly below the city average".
+- Use cautious wording such as "suggests" or "is lower than". Do not state causes, predictions, recommendations, or driver instructions.
+- Do not use the word "trend" for a single historical slice.
+- Mention once, briefly, that the data is synthetic, for example "(synthetic data)". Mention the number of records only when it is under 10, and then say the result is indicative.
+- Use cancellation rate only when it is provided in the evidence. Never mention, calculate, estimate, or infer cancellation probability.
+- Always preserve the exact units provided in the evidence, especially % for cancellation rates. Never remove or change units.
 - Live weather or traffic is current context, not historical ride evidence.
 - When discussing a Home demonstration zone, describe it as a simulated/demo zone and do not call it official neighbourhood data.
+- If asked how this assistant works, say it is a Generative AI assistant that explains metrics calculated by the app, not an autonomous agent.
+- If little evidence is available, give fewer bullets. Do not pad or invent anything to fill space.
 - Keep the answer concise and practical.
+- Write fare values in rupees with the ₹ sign.
 """
 
     try:
@@ -3012,6 +3022,7 @@ Rules:
 # ==============================================================================
 
 def render_live_context(city):
+
     weather = get_live_weather(
         city
     )
@@ -3036,8 +3047,9 @@ def render_live_context(city):
                 "Live Temperature",
                 (
                     f"{format_number(
-                    weather.get('temperature_c'), 
-                    1)} °C"
+                        weather.get("temperature_c"),
+                        1
+                    )} °C"
                 ),
             ),
             (
@@ -3097,48 +3109,52 @@ def render_live_context(city):
 
     else:
         traffic_message = traffic.get(
-        "message",
-        "Live traffic unavailable.",
-    )
-    
-    values.extend([
-        ("Traffic Delay", "Unavailable"),
-        ("Current Speed", "Unavailable"),
-    ])
+            "message",
+            "Live traffic unavailable.",
+        )
 
-    
+        values.extend(
+            [
+                (
+                    "Traffic Delay",
+                    "Unavailable",
+                ),
+                (
+                    "Current Speed",
+                    "Unavailable",
+                ),
+            ]
+        )
 
-    for col, (
-        label,
-        value,
-    ) in zip(
+    for col, (label, value) in zip(
         cols,
         values,
     ):
         with col:
+            card_html = (
+                f'<div class="live-context-card">'
+                f'<div class="live-context-label">{label}</div>'
+                f'<div class="live-context-value">{value}</div>'
+                f'</div>'
+            )
+
             st.markdown(
-                f"""
-                <div class="live-context-card">
-                    <div class="live-context-label">{label}</div>
-                    <div class="live-context-value">{value}</div>
-                </div>
-                """,
+                card_html,
                 unsafe_allow_html=True,
             )
 
     st.caption(
         "Live weather is current context. "
-        "Live traffic is optional and requires "
-        "a TomTom API key. Historical ride metrics "
+        "Live traffic is optional and requires a "
+        "TomTom API key. Historical ride metrics "
         "remain separate from live signals."
     )
 
-    return (
-        weather,
-        traffic,
-    )
+    return weather, traffic
 
-
+# ==============================================================================
+# HOME
+# ==============================================================================
 # ==============================================================================
 # SIDEBAR
 # ==============================================================================
@@ -3174,12 +3190,8 @@ selected_page = nav_options[
     selected_label
 ]
 
-
-# ==============================================================================
-# HOME
-# ==============================================================================
-
 if selected_page == "Home":
+    
 
     current_location = (
         detect_current_location()
@@ -3664,7 +3676,8 @@ if selected_page == "Home":
             "Historical Pattern Summary"
         )
 
-        st.info(summary)
+        with st.container(border=True):
+            st.markdown(summary)
 
 
 # ==============================================================================
@@ -5028,6 +5041,9 @@ elif selected_page == "AI Assistant":
         "FairFare multi-city dataset."
     )
 
+    st.caption(
+        "Simulated data for demonstration"
+    )
     active_context = (
         st.session_state.get(
             "home_last_context"
