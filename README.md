@@ -1,623 +1,416 @@
-# 🚕 MobilityLens — AI-Powered Mobility Data Analytics
+# 🚕 MobilityLens — Ride Demand, Fare & Cancellation Analytics with a Generative AI Assistant
 
-## 📌 Overview
+**MobilityLens** is an **AI + Data Analytics web application** for exploring historical ride-demand, fare, cancellation, driver availability, and city-level mobility patterns using synthetic/demo ride-hailing data.
 
-**MobilityLens** is an AI-powered Data Analytics web application built using **Python, SQL, Streamlit, APIs, and Generative AI**.
+The application combines **Python, Pandas, Streamlit, SQLite database creation, APIs, and Google Gemini Generative AI** to turn historical mobility data into interactive analytical views and concise natural-language explanations.
 
-The application analyzes historical ride-demand data to explore:
+> **Important:** The historical ride data used by MobilityLens is synthetic/generated data for demonstration and portfolio purposes. It is not official Uber, Ola, or other ride-hailing operational data.
 
-- Ride demand
+---
+
+
+
+## 📌 Project Overview
+
+Ride-hailing businesses need to understand how demand, fares, driver availability, cancellations, weather, traffic, and location patterns vary across different mobility situations.
+
+MobilityLens provides an interactive application where users can explore these patterns through multiple analytical pages and use a **Generative AI assistant** to explain the calculated historical results.
+
+The core principle of the application is:
+
+**Data → Python/SQL Analytics → Interactive Dashboard → Gemini Explanation**
+
+Python and analytical logic calculate the metrics. Gemini does **not** replace the analytical calculations; it explains the evidence produced by the application.
+
+---
+
+
+
+## 💼 Business Problem
+
+Ride-hailing businesses need to understand:
+
+- When and where historical ride demand is higher or lower
+- How driver availability relates to historical demand
+- How ride distance and ride type relate to fares
+- How cancellation rates vary across cities and places
+- How historical weather and event information appears alongside mobility data
+- How mobility patterns differ across supported cities
+- How current weather and traffic can provide additional context for a selected city
+
+MobilityLens brings these factors together in one application so users can explore historical mobility patterns and understand the factors associated with them.
+
+---
+
+
+
+## 🎯 Business Impact
+
+MobilityLens demonstrates how historical mobility data can support analysis of:
+
+- **Demand:** Explore periods and locations with different levels of historical demand.
+- **Driver Availability:** Examine available drivers alongside demand.
+- **Pricing:** Compare fares, ride distances, and fare-per-kilometre across ride types and locations.
+- **Cancellations:** Compare historical cancellation patterns across cities and places.
+- **External Context:** View weather and event information alongside mobility analysis.
+- **Location Analysis:** Explore city-level and selected-place mobility patterns.
+- **Decision Support:** Use Generative AI to turn calculated analytical evidence into concise business explanations.
+
+---
+
+
+
+## 📊 Key Historical Metrics
+
+The application works with historical ride-level records containing variables such as:
+
+
+| Metric              | Description                              |
+| ------------------- | ---------------------------------------- |
+| Demand Score        | Historical demand indicator              |
+| Available Drivers   | Number of available drivers              |
+| Ride Distance       | Trip distance in kilometres              |
+| Final Fare          | Historical ride fare                     |
+| Fare per KM         | Calculated fare divided by ride distance |
+| Cancellation Rate   | Historical cancellation rate             |
+| Traffic Delay       | Recorded historical traffic delay        |
+| Driver Availability | Historical driver availability measure   |
+| Weather             | Recorded historical weather category     |
+| Event               | Recorded historical event information    |
+
+
+---
+
+
+
+## 🖥️ Application Pages
+
+
+
+### 🏠 Home
+
+The Home page provides a context-specific starting point for exploring mobility data.
+
+It can:
+
+- Identify the visitor's approximate city when available
+- Show historical mobility context
+- Filter historical records by location, hour, and weekday where applicable
+- Display historical demand, fare, distance, and cancellation information
+- Show current weather context
+- Show live traffic context when the external traffic service is available
+- Provide a concise AI-generated summary of the historical evidence
+
+The Home page uses a **demo-zone concept** for selected-place exploration. These zones should not be interpreted as official neighbourhood boundaries.
+
+---
+
+
+
+### 🇮🇳 India Explorer
+
+The India Explorer provides a broader city-level comparison across the supported cities in the dataset.
+
+It allows users to explore historical mobility patterns across cities and compare metrics such as:
+
+- Demand
 - Fares
 - Ride distance
 - Driver availability
 - Cancellations
-- Demand scores
-- Weather and event patterns
-- City and location-level mobility patterns
+- Ride types
 
-It also combines historical analysis with **current weather and optional traffic context** and uses **Google Gemini Generative AI** to explain calculated analytical results in natural language.
-
-MobilityLens is designed as an **end-to-end Data Analyst portfolio project**, demonstrating how data analysis, SQL, Python, APIs, visualization, application development, and Generative AI can work together in a single application.
-
-> **Important:** The FairFare dataset used by this project is synthetic/generated data. It does not represent official Uber, Ola, or other ride-hailing operational statistics.
+This page is intended for **city-level historical comparison**, rather than real-time operational monitoring.
 
 ---
 
-# 🎯 Objective
 
-The main objective of MobilityLens is to turn mobility data into understandable business insights.
 
-The application helps answer questions such as:
+### 📈 Demand Patterns
 
-- When is historical ride demand higher or lower?
-- How does demand vary by city and hour?
-- How does driver availability relate to demand?
-- How do ride distance and ride type relate to fares?
-- When are cancellations more common?
-- How are weather and event categories associated with demand?
-- What historical mobility patterns exist for a selected location?
-- What is the current weather and traffic context for a selected location?
-- Can analytical results be explained through natural language?
+The Demand Patterns page focuses on historical demand behaviour.
 
----
-
-# 💼 Business Problem
-
-Ride-hailing businesses need to understand how **demand, pricing, driver availability, cancellations, weather, traffic, and events** vary across different mobility situations.
-
-MobilityLens brings these factors together in one interactive application so users can explore historical mobility patterns and understand the factors associated with them.
-
-The application focuses on **historical evidence and analysis**, rather than making guaranteed future predictions.
-
----
-
-# 🏗️ Application Architecture
-
-MobilityLens follows an end-to-end analytics architecture:
-
-```text
-                         USER
-                           │
-                           ▼
-                  ┌─────────────────┐
-                  │    Streamlit    │
-                  │    Frontend     │
-                  └────────┬────────┘
-                           │
-                           ▼
-                ┌─────────────────────┐
-                │ Python Application  │
-                │ Logic + Pandas      │
-                └───────┬───────┬─────┘
-                        │       │
-             ┌──────────▼───┐   └───────────────┐
-             │ SQLite / SQL │                   │
-             │ Historical   │                   │
-             │ Data Layer   │                   │
-             └──────────────┘                   │
-                                               │
-                                  ┌────────────▼────────────┐
-                                  │ External APIs           │
-                                  │ Weather / Traffic       │
-                                  └─────────────────────────┘
-                        │
-                        ▼
-                ┌─────────────────────┐
-                │ Analytical Evidence │
-                │ KPIs / Aggregations │
-                │ Historical Patterns │
-                └──────────┬──────────┘
-                           │
-                           ▼
-                  ┌────────────────┐
-                  │ Gemini LLM     │
-                  │ Generative AI  │
-                  └───────┬────────┘
-                          │
-                          ▼
-                  Natural-Language
-                     Business
-                      Insight
-
-```
-
----
-
-# 🖥️ Frontend
-
-### Streamlit
-
-Streamlit is used to build the interactive web application.
-
-The frontend provides:
-
-- City and location selection
-- Day and hour filters
-- Ride-type filters
-- KPI cards
-- Historical demand tables
-- Charts and visualizations
-- Weather information
-- Traffic context
-- India Explorer
-- AI Assistant
-- Historical context and fallback information
-
-The application allows users to interact with the analysis without directly writing SQL or Python queries.
-
----
-
-# ⚙️ Backend / Application Logic
-
-### Python
-
-Python acts as the main application and analytical layer.
-
-It handles:
-
-- Data loading
-- Data processing
-- Historical filtering
-- KPI calculations
-- Demand-level classification
-- Cancellation calculations
-- Fare analysis
-- Ride-distance analysis
-- Driver availability analysis
-- Location processing
-- Haversine distance calculations
-- Zone assignment
-- API integration
-- Preparing analytical evidence for Gemini
-- Streamlit application orchestration
-
-### Pandas
-
-Pandas is used for data manipulation and analytical processing, including:
-
-- Filtering records
-- Grouping and aggregation
-- Calculating averages and rates
-- Processing historical records
-- Handling numeric fields
-- Preparing data for charts and tables
-- Supporting fallback analysis when location-specific historical records are sparse
-
-### NumPy
-
-NumPy is used for numerical operations, including calculations involved in location and distance processing.
-
----
-
-# 🗄️ Database & SQL Layer
-
-### SQLite
-
-SQLite provides the local analytical database layer for the FairFare mobility data.
-
-The project creates a local SQLite database from the source dataset.
-
-### SQL
-
-SQL is used for analytical operations such as:
-
-- Filtering
-- `COUNT`
-- `SUM`
-- `AVG`
-- `GROUP BY`
-- City-level analysis
-- Hourly analysis
-- Ride-type analysis
-- Demand analysis
-- Fare analysis
-- Cancellation analysis
-- Driver availability analysis
-
-The application also contains **Python/Pandas processing and fallback logic** for cases where the required historical records or database-level context are not available.
-
-This allows the application to continue providing useful historical context instead of failing when a selected location has sparse data.
-
----
-
-# 📍 Location & Historical Context
-
-MobilityLens uses demonstration zones to organize historical mobility records into location-level context.
-
-The location workflow is:
-
-```text
-Selected Location
-       ↓
-Latitude / Longitude
-       ↓
-Haversine Distance Calculation
-       ↓
-Nearest Demonstration Zone
-       ↓
-Historical Zone Records
-       ↓
-Selected Day + Hour + Ride Type
-       ↓
-Historical KPIs
-
-```
-
-The application uses demonstration zone coordinates rather than claiming that the dataset contains official neighborhood-level ride statistics.
-
-For locations where sufficient place-specific historical records are not available, the application can fall back to broader historical context.
-
-The fallback sequence is:
-
-```text
-Place + Hour + Day
-        ↓
-Place + Hour
-        ↓
-Place + All Times
-        ↓
-City + Hour + Day
-        ↓
-City + Hour
-        ↓
-City + All Times
-
-```
-
-The Home page displays the **historical filter level and number of records used**, so users can understand the basis of the displayed KPIs.
-
----
-
-# 📊 Analytics Performed
-
-MobilityLens performs business-oriented analysis across several dimensions.
-
-### Demand Analysis
-
-The application analyzes:
-
-- Demand by city
-- Demand by hour
-- Demand by ride type
-- Demand scores
-- Demand levels
-- Driver availability alongside demand
-
-### Fare Analysis
-
-The application analyzes:
-
-- Average fare
-- Ride distance
-- Fare by ride type
-- Fare-per-distance patterns
-- Historical fare differences across mobility contexts
-
-### Cancellation Analysis
-
-The application analyzes:
-
-- Historical cancellation rate
-- Cancellation probability
-- Cancellation patterns across different mobility contexts
-
-### Driver Analysis
-
-The application examines:
-
-- Available drivers
-- Driver availability
-- Relationship between driver availability and demand
-- Driver-related historical metrics available in the dataset
-
-### Weather & Event Analysis
-
-The application can compare historical demand metrics across:
-
-- Weather categories
-- Event vs non-event records
-
-These are treated as **historical associations**, not proof of causation.
-
----
-
-# 📏 Metric Definitions
-
-### Bookings
-
-Number of historical ride records matching the selected context.
-
-### Completed Rides
-
-An estimated value calculated from bookings and the historical cancellation rate:
-
-```text
-Estimated Completed Rides
-=
-Bookings × (1 − Cancellation Rate)
-
-```
-
-### Cancellation Rate
-
-Historical cancellation rate associated with the selected records.
-
-### Cancellation Probability
-
-A separate historical dataset field representing cancellation probability.
-
-These two metrics are not treated as the same measure.
-
-### Average Fare
-
-Average `Final_Fare` across the selected historical records.
-
-### Fare per KM
-
-Fare relative to ride distance.
-
-### Demand Score
-
-A historical demand-related score already present in the dataset.
-
-The original generation formula for the individual `Demand_Score` field is not documented in the current project code, so the application does not claim a specific mathematical generation formula.
-
-### Demand Levels
-
-The application derives **Low, Medium, and High** demand categories from the available demand-score distribution when usable categorical demand labels are not available.
-
-### Available Drivers vs Driver Availability
-
-These are treated as separate dataset fields and are not assumed to represent the same metric.
-
----
-
-# 📂 Dataset
-
-The application uses the **FairFare Ride Demand Dataset**, containing synthetic/generated mobility records across multiple Indian cities.
-
-### Supported Cities
-
-- Hyderabad
-- Delhi
-- Mumbai
-- Bangalore
-- Chennai
-
-### Important Fields
-
-
-| Column                | Description                  |
-| --------------------- | ---------------------------- |
-| `City`                | City of the ride             |
-| `Date`                | Ride date                    |
-| `Day_of_Week`         | Day of the week              |
-| `Ride_Distance_KM`    | Ride distance                |
-| `Ride_Type`           | Economy, Premium, or Luxury  |
-| `Weather`             | Historical weather category  |
-| `Event`               | Historical event category    |
-| `Available_Drivers`   | Available driver count       |
-| `Demand_Level`        | Dataset demand field         |
-| `Surge_Multiplier`    | Historical surge multiplier  |
-| `Final_Fare`          | Final ride fare              |
-| `Hour_of_Day`         | Hour of the ride             |
-| `Cancellation_Rate`   | Historical cancellation rate |
-| `Demand_Score`        | Historical demand score      |
-| `Driver_Availability` | Driver availability measure  |
-| `Traffic_Delay`       | Historical traffic delay     |
-
-
-> The dataset is synthetic/generated and should not be interpreted as official operational data from Uber, Ola, or another ride-hailing company.
-
----
-
-# 🌐 API Integration
-
-## Weather API
-
-**Open-Meteo** is used to retrieve current weather information.
-
-The weather information provides current context for the selected location and is separate from the historical FairFare observations.
-
-## Traffic API
-
-**TomTom Traffic API** can provide current traffic context where available.
-
-Traffic information is treated as additional live context rather than historical FairFare data.
-
----
-
-# 🤖 Generative AI
-
-MobilityLens integrates **Google Gemini** as a Generative AI layer.
-
-The AI Assistant does not independently calculate the underlying business metrics.
-
-Instead, the application first performs the analysis using Python/SQL and prepares relevant evidence.
-
-The workflow is:
-
-```text
-User Question
-      ↓
-MobilityLens receives the question
-      ↓
-Python / SQL analyze historical data
-      ↓
-Relevant metrics and evidence are calculated
-      ↓
-Evidence is provided to Gemini
-      ↓
-Gemini interprets the analytical evidence
-      ↓
-Natural-Language Business Insight
-
-```
-
-For example, a user can ask:
-
-> What factors are associated with higher demand?
-
-The application calculates the relevant historical evidence first, then Gemini explains those results in natural language.
-
-### Important
-
-MobilityLens uses **Generative AI**, not an autonomous Agentic AI architecture.
-
-Gemini is used primarily for **natural-language interpretation and explanation of analytical results**.
-
----
-
-# 📱 Application Pages
-
-## 🏠 Home
-
-Provides the main historical mobility context.
-
-Includes:
-
-- Current approximate city context
-- Selected location
-- Historical records
-- KPI metrics
-- Demand levels
-- Weather mix
-- Zone comparison
-- Ride-type analysis
-- Current weather
-- Optional traffic context
-- Historical filter level and record count
-
----
-
-## 🇮🇳 India Explorer
-
-Allows users to explore supported Indian cities and demonstration zones.
-
-Users can examine historical mobility information across different locations.
-
----
-
-## 📈 Demand Patterns
-
-Analyzes historical demand by:
+Users can explore demand using dimensions such as:
 
 - City
+- Place
 - Hour
+- Weekday
 - Ride type
 - Demand level
-- Driver availability
+
+The purpose is to identify historical demand patterns rather than predict future demand.
 
 ---
 
-## 💰 Historical Earnings
 
-Explores historical fare and earnings-related patterns using:
 
-- Ride distance
+### 💰 Historical Earnings
+
+The Historical Earnings page examines historical fare and earnings-related metrics.
+
+Users can analyze:
+
+- Average fare
+- Average fare per kilometre
+- Average ride distance
 - Ride type
-- Fare
-- Historical mobility records
+- City
+- Selected place
+
+This helps demonstrate how fare and trip characteristics can be examined from historical ride records.
 
 ---
 
-## ❌ Cancellations
 
-Analyzes historical cancellation behavior and related mobility factors.
+
+### ❌ Cancellations
+
+The Cancellations page focuses on historical cancellation behaviour.
+
+Users can compare cancellation patterns by:
+
+- City
+- Selected place
+- Ride type
+
+The page is intended for historical comparison and does not currently provide a full hourly cancellation trend analysis.
 
 ---
 
-## 🤖 AI Assistant
 
-Allows users to ask natural-language questions about the historical mobility dataset.
 
-The assistant uses calculated analytical evidence to generate business-oriented explanations.
+### 🤖 AI Assistant
 
----
+MobilityLens includes a **Google Gemini Generative AI assistant**.
 
-# 🔄 End-to-End Data Flow
+The assistant receives analytical evidence calculated by the application and converts it into concise natural-language explanations.
+
+For example, it can explain:
+
+- Whether a selected place is above or below the city average
+- Whether historical cancellation rates are relatively higher or lower
+- How historical demand compares with a city benchmark
+- How fare-per-kilometre compares with the available benchmark
+
+
+
+### How the AI works
 
 ```text
-FairFare CSV
-     ↓
-Data Loading
-     ↓
-Python / Pandas Processing
-     ↓
-SQLite Database
-     ↓
-SQL + Python Historical Analysis
-     ↓
-KPIs / Aggregations / Business Evidence
-     ↓
-Streamlit Visualization
-     ↓
-Current Weather / Traffic APIs
-     ↓
+Historical Ride Data
+        ↓
+Data Cleaning & Transformation
+        ↓
+Python / Analytical Calculations
+        ↓
+Historical Metrics & Comparisons
+        ↓
 Gemini Generative AI
-     ↓
-Natural-Language Business Insights
+        ↓
+Natural-Language Explanation
+
+```
+
+
+
+### Important distinction
+
+MobilityLens is **not an autonomous AI agent**.
+
+The application does not ask Gemini to independently perform the entire analysis.
+
+Instead:
+
+> **Python/analytics calculates the numbers → Gemini explains the calculated evidence.**
+
+This makes the AI component transparent and easier to validate.
+
+---
+
+
+
+## 🌦️ Current Weather Context
+
+MobilityLens can retrieve current weather information through the **Open-Meteo API**.
+
+Current weather is used as **context**, not as historical ride evidence.
+
+For example:
+
+```text
+Current Weather
+       ↓
+Context for the selected city
+       ↓
+Displayed alongside historical analytics
+
+```
+
+The application does not claim that current weather caused the historical ride patterns.
+
+---
+
+
+
+## 🚦 Live Traffic Context
+
+MobilityLens includes optional integration with the **TomTom Traffic API**.
+
+When the traffic service and API credentials are available, the application can display current traffic context such as:
+
+- Traffic delay
+- Current speed
+
+Live traffic is separate from the historical ride dataset.
+
+> **Live traffic is displayed where the external traffic service is available and responding successfully.**
+
+A traffic API failure does not prevent the historical analytics pages from working.
+
+---
+
+
+
+## 🗄️ Data & Database
+
+The project uses a synthetic/demo ride-hailing dataset containing historical mobility records.
+
+The application includes SQLite database creation and database-query functions as part of the project architecture.
+
+However, the current application also contains a **database availability check**. When the required SQL functions are not available through that check, the analytical pages fall back to the Pandas-based implementation.
+
+Therefore, the project should not be described as a fully SQL-driven dashboard.
+
+A more accurate description is:
+
+> **Python/Pandas-based historical analytics application with SQLite database support and SQL query infrastructure.**
+
+---
+
+
+
+## 🧹 Data Preparation
+
+The application performs preprocessing before analysis, including:
+
+- Cleaning text fields
+- Converting numeric columns
+- Handling missing event information
+- Validating coordinate values
+- Calculating derived metrics
+- Assigning records to demonstration zones where applicable
+- Converting cancellation rates into percentage representations when required
+- Creating fare-per-kilometre calculations
+- Normalising demand-level categories when necessary
+
+Example derived metric:
+
+```text
+Fare per KM = Final Fare / Ride Distance
+
+```
+
+The calculations are performed from the historical records rather than being generated by the AI assistant.
+
+---
+
+
+
+## 🧭 Location Analysis
+
+MobilityLens uses two different location concepts:
+
+### Home
+
+The Home page uses the visitor's approximate/current city context when available.
+
+### India Explorer
+
+India Explorer provides supported-city comparison.
+
+### Selected Places
+
+Selected places use demonstration-zone data where applicable.
+
+These zones are intended for portfolio demonstration and should not be interpreted as official geographic or administrative boundaries.
+
+---
+
+
+
+## 🏗️ Application Architecture
+
+```text
+                    ┌──────────────────────┐
+                    │ Historical CSV Data  │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │ Data Preparation     │
+                    │ Python / Pandas      │
+                    └──────────┬───────────┘
+                               │
+                  ┌────────────┴────────────┐
+                  ▼                         ▼
+        ┌──────────────────┐      ┌──────────────────┐
+        │ Analytical Logic │      │ SQLite Database  │
+        │ Python / Pandas  │      │ / SQL Support    │
+        └────────┬─────────┘      └────────┬─────────┘
+                 │                         │
+                 └────────────┬────────────┘
+                              ▼
+                   ┌──────────────────────┐
+                   │ Streamlit Application│
+                   └──────────┬───────────┘
+                              │
+            ┌─────────────────┼─────────────────┐
+            ▼                 ▼                 ▼
+       Dashboard          APIs             Gemini
+       Analytics       Weather/Traffic    AI Assistant
+            │                 │                 │
+            └─────────────────┴─────────────────┘
+                              ▼
+                   Natural-Language Insights
 
 ```
 
 ---
 
-# 💼 Business Impact
-
-MobilityLens helps mobility stakeholders explore historical patterns related to:
-
-- **Demand:** Understand when and where historical ride demand has been higher or lower.
-- **Driver Availability:** Examine driver availability alongside historical demand.
-- **Pricing:** Compare fares across ride types and distances.
-- **Cancellations:** Identify historical cancellation patterns.
-- **Weather & Events:** Analyze external conditions alongside mobility demand.
-- **Locations:** Compare mobility patterns across cities and selected demonstration zones.
-- **Decision Support:** Bring multiple mobility metrics together in one interactive application.
-- **AI-Assisted Analysis:** Convert calculated analytical results into easy-to-understand natural-language explanations.
-
-Overall, MobilityLens demonstrates how historical mobility data can be transformed into **business insights about demand, pricing, driver availability, and cancellations**.
-
----
-
-# 🛠️ Technology Stack
 
 
-| Layer               | Technology         | Purpose                                  |
-| ------------------- | ------------------ | ---------------------------------------- |
-| Frontend            | Streamlit          | Interactive web application              |
-| Programming         | Python             | Application and analytics logic          |
-| Data Analysis       | Pandas             | Data processing and analysis             |
-| Numerical Computing | NumPy              | Numerical calculations                   |
-| Database            | SQLite             | Local analytical database                |
-| Query Language      | SQL                | Filtering and aggregation                |
-| Visualization       | Altair / Streamlit | Charts and visual analysis               |
-| Weather API         | Open-Meteo         | Current weather context                  |
-| Traffic API         | TomTom             | Current traffic context                  |
-| Generative AI       | Google Gemini      | Natural-language analytical explanations |
-| Version Control     | Git                | Source-code version control              |
-| Repository          | GitHub             | Project hosting                          |
-| Development         | Cursor             | AI-assisted development                  |
+## 🛠️ Technology Stack
+
+
+| Technology                       | Purpose                             |
+| -------------------------------- | ----------------------------------- |
+| Python                           | Application and analytical logic    |
+| Pandas                           | Data cleaning and analysis          |
+| NumPy                            | Numerical operations                |
+| Streamlit                        | Interactive web application         |
+| SQLite                           | Local database support              |
+| SQL                              | Database query infrastructure       |
+| Google Gemini                    | Generative AI explanations          |
+| Open-Meteo API                   | Current weather context             |
+| TomTom Traffic API               | Optional live traffic context       |
+| Git & GitHub                     | Version control and project hosting |
+| Streamlit Cloud                  | Application deployment              |
+| Cursor / AI-assisted development | Development support                 |
 
 
 ---
 
-# 📸 Application Screenshots
 
-## Home
 
-![MobilityLens Home](https://chatgpt.com/c/Screenshots/home.png)
-
-## India Explorer
-
-![India Explorer](https://chatgpt.com/c/Screenshots/india-explorer.png)
-
-## Demand Patterns
-
-![Demand Patterns](https://chatgpt.com/c/Screenshots/demand-patterns.png)
-
-## Historical Earnings
-
-![Historical Earnings](https://chatgpt.com/c/Screenshots/historical-earnings.png)
-
-## Cancellations
-
-![Cancellations](https://chatgpt.com/c/Screenshots/cancellations.png)
-
-## AI Assistant
-
-![AI Assistant](https://chatgpt.com/c/Screenshots/ai-assistant.png)
-
----
-
-# 📂 Project Structure
+## 📁 Project Structure
 
 ```text
-AI-Uber-Data-Analytics/
+mobilitylens/
 │
 ├── data/
 │   ├── fairfare_ride_demand_dataset.csv
-│   ├── mobilitylens_zones.csv
-│   └── README.md
+│   └── mobilitylens_zones.csv
 │
 ├── Screenshots/
 │   ├── ai-assistant.png
@@ -632,146 +425,289 @@ AI-Uber-Data-Analytics/
 ├── create_database.py
 ├── requirements.txt
 ├── README.md
-└── .gitignore
+├── .gitignore
+└── .env.example
 
 ```
 
 ---
 
-# ⚙️ Setup
 
-## 1. Clone the Repository
+
+## ⚙️ Installation
+
+Clone the repository and move into the project directory:
 
 ```bash
-git clone https://github.com/avinashreddy-da/AI-Uber-Data-Analytics.git
-cd AI-Uber-Data-Analytics
+git clone <GITHUB_REPOSITORY_URL>
+cd mobilitylens
 
 ```
 
-## 2. Install Dependencies
+Create a virtual environment:
+
+```bash
+python -m venv venv
+
+```
+
+Activate it on Windows:
+
+```bash
+venv\Scripts\activate
+
+```
+
+Install the required packages:
 
 ```bash
 pip install -r requirements.txt
 
 ```
 
-## 3. Configure API Keys
+---
 
-Create a `.env` file:
+
+
+## 📦 Requirements
+
+The application uses the following core dependencies:
+
+```text
+streamlit==1.64.0
+pandas==3.0.6
+numpy==2.5.3
+requests==2.34.2
+altair==6.3.0
+python-dotenv==1.2.3
+google-genai==2.27.0
+
+```
+
+---
+
+
+
+## 🔐 Environment Variables
+
+Create a local `.env` file for API credentials.
+
+Example:
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key
 TOMTOM_API_KEY=your_tomtom_api_key
+RIDEINTEL_CITY=Hyderabad
 
 ```
 
-API keys should never be committed to GitHub.
+**Never commit real API keys to GitHub.**
 
-## 4. Create the Database
+The `.env` file is excluded through `.gitignore`.
 
-```bash
-python create_database.py
+For Streamlit Cloud, API credentials should be stored through the application's **Secrets** configuration rather than committed to the repository.
 
-```
+---
 
-## 5. Run the Application
+
+
+## ▶️ Run the Application
+
+Start the Streamlit application with:
 
 ```bash
 streamlit run main.py
 
 ```
 
----
-
-# ⚠️ Limitations
-
-- The FairFare dataset is synthetic/generated data.
-- Historical results do not represent official Uber/Ola operational statistics.
-- The application does not guarantee future demand, fares, earnings, or cancellation outcomes.
-- Demonstration zones are used to organize historical records.
-- Some selected locations may not have sufficient place-specific historical records.
-- When place-specific records are sparse, the application can use broader city-level historical context.
-- Current weather and traffic are live contextual information and are not historical FairFare observations.
-- Event analysis represents historical association and should not be interpreted as causation.
-- API availability and quotas can affect live weather, traffic, or AI functionality.
-- Gemini explanations depend on the analytical evidence provided by the application.
+The application will open in your browser.
 
 ---
 
-# 🧠 Skills Demonstrated
 
-### Data Analytics
 
-- Data Cleaning
-- Exploratory Data Analysis
-- Business Analysis
-- KPI Development
-- Historical Pattern Analysis
-- Statistical Interpretation
+## ☁️ Deployment
 
-### Technical
+MobilityLens is designed for deployment using **Streamlit Cloud**.
+
+The deployment requires:
+
+1. A GitHub repository
+2. The project files
+3. `requirements.txt`
+4. Streamlit Cloud Secrets for API credentials
+5. `main.py` as the application entry point
+
+The application can continue to provide historical analytics even when optional external APIs are unavailable.
+
+---
+
+
+
+## 📸 Screenshots
+
+
+
+### Home
+
+![MobilityLens Home](https://chatgpt.com/c/Screenshots/home.png)
+
+### India Explorer
+
+![India Explorer](https://chatgpt.com/c/Screenshots/india-explorer.png)
+
+### Demand Patterns
+
+![Demand Patterns](https://chatgpt.com/c/Screenshots/demand-patterns.png)
+
+### Historical Earnings
+
+![Historical Earnings](https://chatgpt.com/c/Screenshots/historical-earnings.png)
+
+### Cancellations
+
+![Cancellations](https://chatgpt.com/c/Screenshots/cancellations.png)
+
+### AI Assistant
+
+![AI Assistant](https://chatgpt.com/c/Screenshots/ai-assistant.png)
+
+---
+
+
+
+## ⚠️ Limitations
+
+MobilityLens is a portfolio and demonstration project, so several limitations should be considered.
+
+### Synthetic Data
+
+The historical ride dataset is synthetic/generated data and should not be interpreted as real operational data from a ride-hailing company.
+
+### Historical Analysis
+
+The main analytical pages describe historical records. They are not production forecasting or real-time demand prediction systems.
+
+### AI
+
+Gemini is used as a **Generative AI explanation layer**.
+
+It does not independently calculate the underlying business metrics.
+
+### Traffic
+
+Live traffic depends on an external TomTom API and may be unavailable if the service or API credentials do not respond successfully.
+
+### Weather
+
+Current weather is contextual information and should not be interpreted as historical weather for individual rides.
+
+### Events
+
+Event information comes from the available dataset and should not be interpreted as a complete real-world event calendar.
+
+### Geographic Zones
+
+Demonstration zones are portfolio-oriented geographic references and are not official neighbourhood boundaries.
+
+### Database
+
+SQLite support is included in the architecture, but the application's analytical pages can fall back to Pandas when the required SQL-query availability checks are not satisfied.
+
+---
+
+
+
+## 🚀 Future Improvements
+
+Potential improvements include:
+
+- Add more robust SQL coverage across all analytical pages
+- Add richer time-based cancellation analysis
+- Add stronger weather-versus-demand comparisons
+- Add more detailed event analysis
+- Improve real-time traffic integration
+- Add demand forecasting models
+- Add predictive cancellation modelling
+- Add more city and zone coverage
+- Add automated data-refresh pipelines
+- Add stronger validation and monitoring for external APIs
+- Add production-scale database support
+
+---
+
+
+
+## 🎓 Skills Demonstrated
+
+This project demonstrates practical experience with:
 
 - Python
 - Pandas
 - NumPy
 - SQL
 - SQLite
+- Data cleaning
+- Exploratory data analysis
+- Business analytics
+- KPI development
 - Streamlit
-- Altair
-- API Integration
+- API integration
 - Generative AI
-
-### Business
-
-- Demand Analysis
-- Pricing Analysis
-- Cancellation Analysis
-- Driver Availability Analysis
-- Location Analysis
-- Business Insight Generation
-
-### Development
-
-- Git
-- GitHub
-- Cursor
-- Application Development
-- End-to-End Analytics Workflow
+- Prompt design
+- Data storytelling
+- Git & GitHub
+- Cloud deployment
 
 ---
 
-# 📌 Key Takeaway
 
-MobilityLens demonstrates an end-to-end Data Analytics workflow:
+
+## 💡 Key Takeaway
+
+MobilityLens demonstrates an end-to-end approach to building a modern analytics application:
 
 ```text
-Raw Mobility Data
-       ↓
-Data Processing
-       ↓
-SQL + Python Analysis
-       ↓
-Business Evidence
-       ↓
-Interactive Streamlit Application
-       ↓
-Live API Context
-       ↓
+Business Problem
+      ↓
+Historical Data
+      ↓
+Data Cleaning
+      ↓
+Analytical Metrics
+      ↓
+Interactive Dashboard
+      ↓
+External Context APIs
+      ↓
 Generative AI Explanation
+      ↓
+Business Insight
 
 ```
 
-The project demonstrates how a Data Analyst can combine **business analysis, SQL, Python, visualization, APIs, application development, and Generative AI** to build an interactive analytics solution.
+The main analytical work is performed through **Python/Pandas and SQL/database infrastructure**, while **Gemini Generative AI helps explain the calculated evidence in natural language**.
+
+This makes MobilityLens an **analytics-first application with a practical Generative AI layer**, rather than an AI system that replaces the underlying analysis.
 
 ---
 
-# 👨‍💻 Author
+
+
+## 👨‍💻 Author
 
 **Avinash Reddy**
 
-MSc Statistics — Pondicherry University
+MSc Statistics | Data Analyst Aspirant
 
-**Aspiring Data Analyst**
+Skills: Python • SQL • Pandas • Power BI • Excel • Statistics • Streamlit • Generative AI
 
-**Skills:** SQL | Python | Pandas | Excel | Power BI | Statistics | Business Analysis | Generative AI
+---
 
+
+
+## ⭐ Project Positioning
+
+**MobilityLens — Ride Demand, Fare & Cancellation Analytics with a Generative AI Assistant**
+
+A portfolio project demonstrating how **data analytics + APIs + Generative AI** can be combined into an interactive business analytics application.
