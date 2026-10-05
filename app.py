@@ -3,6 +3,7 @@ import json
 import time
 
 import altair as alt
+import pydeck as pdk
 import numpy as np
 import pandas as pd
 import requests
@@ -3705,7 +3706,6 @@ elif selected_page == "India Explorer":
             "FairFare data or demonstration "
             "zones are unavailable."
         )
-
         st.stop()
 
     map_data = get_city_map_data()
@@ -3715,7 +3715,6 @@ elif selected_page == "India Explorer":
             "No supported FairFare cities "
             "are available."
         )
-
         st.stop()
 
     st.subheader(
@@ -3807,12 +3806,89 @@ elif selected_page == "India Explorer":
         ]
     ]
 
-    st.map(
-        zone_map,
-        latitude="Latitude",
-        longitude="Longitude",
-        zoom=9,
-        height=360,
+    lat_span = float(
+        zone_map["Latitude"].max()
+        - zone_map["Latitude"].min()
+    )
+
+    lon_span = float(
+        zone_map["Longitude"].max()
+        - zone_map["Longitude"].min()
+    )
+
+    span = max(
+        lat_span,
+        lon_span,
+    )
+
+    if span <= 0.02:
+        map_zoom = 13
+    elif span <= 0.05:
+        map_zoom = 12
+    elif span <= 0.10:
+        map_zoom = 11
+    elif span <= 0.20:
+        map_zoom = 10
+    else:
+        map_zoom = 9
+
+    zone_layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=zone_map,
+        get_position="[Longitude, Latitude]",
+        get_radius=500,
+        get_fill_color=[
+            56,
+            189,
+            248,
+            180,
+        ],
+        pickable=True,
+    )
+
+    zone_text_layer = pdk.Layer(
+    "TextLayer",
+    data=zone_map,
+    get_position="[Longitude, Latitude]",
+    get_text="zone",
+    get_size=12,
+    get_color=[
+    255,
+    255,
+    255,
+    255,
+],
+    pickable=False,
+)
+
+    zone_view = pdk.ViewState(
+        latitude=float(
+            zone_map["Latitude"].mean()
+        ),
+        longitude=float(
+            zone_map["Longitude"].mean()
+        ),
+        zoom=map_zoom,
+    )
+
+    zone_deck = pdk.Deck(
+        layers=[
+            zone_layer,
+            zone_text_layer,
+        ],
+        initial_view_state=zone_view,
+        tooltip={
+            "html": "<b>{zone}</b><br/>{zone_type}",
+            "style": {
+                "backgroundColor": "#1e293b",
+                "color": "#f8fafc",
+            },
+        },
+    )
+
+    st.pydeck_chart(
+        zone_deck,
+        use_container_width=True,
     )
 
     st.dataframe(
@@ -3837,7 +3913,7 @@ elif selected_page == "India Explorer":
     st.caption(
         f"Zone assignment coverage: "
         f"{len(assigned):,} of "
-        f"{len(fairfare_filter(city=selected_city)):,} "
+        f"{len(fairfare_filter(city=selected_city)): ,} "
         f"city records were assigned within the "
         f"{ZONE_MAX_DISTANCE_KM:.0f} km threshold. "
         "City-level summaries use the complete FairFare city data."
@@ -4579,23 +4655,36 @@ elif selected_page == "Earnings":
         )
 
     else:
-        st.dataframe(
-            comparison.rename(
-                columns={
-                    "Zone": "Place",
-                    "Ride_Type": "Ride Type",
-                    "Average_Fare": "Avg Fare (₹)",
-                    "Average_Fare_Per_KM": (
-                        "Avg Fare / Km (₹)"
-                    ),
-                    "Average_Ride_Distance": (
-                        "Avg Distance (km)"
-                    ),
-                }
+        comparison_display = comparison.rename(
+        columns={
+            "Zone": "Place",
+            "Ride_Type": "Ride Type",
+            "Average_Fare": "Avg Fare (₹)",
+            "Average_Fare_Per_KM": (
+                "Avg Fare / Km (₹)"
             ),
-            use_container_width=True,
-            hide_index=True,
-        )
+            "Average_Ride_Distance": (
+                "Avg Distance (km)"
+            ),
+        }
+    ).copy()
+
+    st.dataframe(
+        comparison_display,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Avg Fare (₹)": st.column_config.NumberColumn(
+                format="%.2f"
+            ),
+            "Avg Fare / Km (₹)": st.column_config.NumberColumn(
+                format="%.2f"
+            ),
+            "Avg Distance (km)": st.column_config.NumberColumn(
+                format="%.2f"
+            ),
+        },
+    )
 
 
 # ==============================================================================
