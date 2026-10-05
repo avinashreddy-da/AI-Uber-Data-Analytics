@@ -1,12 +1,10 @@
 # 🚕 MobilityLens — Ride Demand, Fare & Cancellation Analytics with a Generative AI Assistant
 
-🔗 **Live Demo:** https://ai-uber-data-analytics-qy6uhhjyq9mgvet3qoxrhy.streamlit.app/
+🔗 **Live Demo:** [https://ai-uber-data-analytics-qy6uhhjyq9mgvet3qoxrhy.streamlit.app/](https://ai-uber-data-analytics-qy6uhhjyq9mgvet3qoxrhy.streamlit.app/)
 
 **MobilityLens** is an **AI + Data Analytics web application** for exploring historical ride-demand, fare, cancellation, driver availability, and city-level mobility patterns using synthetic/demo ride-hailing data.
 
 ---
-
-
 
 ## 📌 Project Overview
 
@@ -21,8 +19,6 @@ The core principle of the application is:
 Python and analytical logic calculate the metrics. Gemini does **not** replace the analytical calculations; it explains the evidence produced by the application.
 
 ---
-
-
 
 ## 💼 Business Problem
 
@@ -40,8 +36,6 @@ MobilityLens brings these factors together in one application so users can explo
 
 ---
 
-
-
 ## 🎯 Business Impact
 
 MobilityLens demonstrates how historical mobility data can support analysis of:
@@ -55,8 +49,6 @@ MobilityLens demonstrates how historical mobility data can support analysis of:
 - **Decision Support:** Use Generative AI to turn calculated analytical evidence into concise business explanations.
 
 ---
-
-
 
 ## 📊 Key Historical Metrics
 
@@ -79,11 +71,7 @@ The application works with historical ride-level records containing variables su
 
 ---
 
-
-
 ## 🖥️ Application Pages
-
-
 
 ### 🏠 Home
 
@@ -103,8 +91,6 @@ The Home page uses a **demo-zone concept** for selected-place exploration. These
 
 ---
 
-
-
 ### 🇮🇳 India Explorer
 
 The India Explorer provides a broader city-level comparison across the supported cities in the dataset.
@@ -121,8 +107,6 @@ It allows users to explore historical mobility patterns across cities and compar
 This page is intended for **city-level historical comparison**, rather than real-time operational monitoring.
 
 ---
-
-
 
 ### 📈 Demand Patterns
 
@@ -141,8 +125,6 @@ The purpose is to identify historical demand patterns rather than predict future
 
 ---
 
-
-
 ### 💰 Historical Earnings
 
 The Historical Earnings page examines historical fare and earnings-related metrics.
@@ -160,8 +142,6 @@ This helps demonstrate how fare and trip characteristics can be examined from hi
 
 ---
 
-
-
 ### ❌ Cancellations
 
 The Cancellations page focuses on historical cancellation behaviour.
@@ -176,8 +156,6 @@ The page is intended for historical comparison and does not currently provide a 
 
 ---
 
-
-
 ### 🤖 AI Assistant
 
 MobilityLens includes a **Google Gemini Generative AI assistant**.
@@ -190,8 +168,6 @@ For example, it can explain:
 - Whether historical cancellation rates are relatively higher or lower
 - How historical demand compares with a city benchmark
 - How fare-per-kilometre compares with the available benchmark
-
-
 
 ### How the AI works
 
@@ -210,8 +186,6 @@ Natural-Language Explanation
 
 ```
 
-
-
 ### Important distinction
 
 MobilityLens is **not an autonomous AI agent**.
@@ -225,8 +199,6 @@ Instead:
 This makes the AI component transparent and easier to validate.
 
 ---
-
-
 
 ## 🌦️ Current Weather Context
 
@@ -249,8 +221,6 @@ The application does not claim that current weather caused the historical ride p
 
 ---
 
-
-
 ## 🚦 Live Traffic Context
 
 MobilityLens includes optional integration with the **TomTom Traffic API**.
@@ -268,8 +238,6 @@ A traffic API failure does not prevent the historical analytics pages from worki
 
 ---
 
-
-
 ## 🗄️ Data & Database
 
 The project uses a synthetic/demo ride-hailing dataset containing historical mobility records.
@@ -285,8 +253,6 @@ A more accurate description is:
 > **Python/Pandas-based historical analytics application with SQLite database support and SQL query infrastructure.**
 
 ---
-
-
 
 ## 🧹 Data Preparation
 
@@ -313,8 +279,6 @@ The calculations are performed from the historical records rather than being gen
 
 ---
 
-
-
 ## 🧭 Location Analysis
 
 MobilityLens uses two different location concepts:
@@ -334,8 +298,6 @@ Selected places use demonstration-zone data where applicable.
 These zones are intended for portfolio demonstration and should not be interpreted as official geographic or administrative boundaries.
 
 ---
-
-
 
 ## 🏗️ Application Architecture
 
@@ -376,8 +338,6 @@ These zones are intended for portfolio demonstration and should not be interpret
 
 ---
 
-
-
 ## 🛠️ Technology Stack
 
 
@@ -398,8 +358,6 @@ These zones are intended for portfolio demonstration and should not be interpret
 
 
 ---
-
-
 
 ## 📁 Project Structure
 
@@ -430,14 +388,13 @@ mobilitylens/
 
 ---
 
-
-
 ## ⚙️ Installation
 
 Clone the repository and move into the project directory:
 
 ```bash
-git clone <GITHUB_REPOSITORY_URL>
+git clone https://github.com/avinashreddy-da/mobilitylens.git
+cd mobilitylens
 cd mobilitylens
 
 ```
@@ -465,8 +422,6 @@ pip install -r requirements.txt
 
 ---
 
-
-
 ## 📦 Requirements
 
 The application uses the following core dependencies:
@@ -483,8 +438,6 @@ google-genai==2.27.0
 ```
 
 ---
-
-
 
 ## 🔐 Environment Variables
 
@@ -507,8 +460,6 @@ For Streamlit Cloud, API credentials should be stored through the application's 
 
 ---
 
-
-
 ## ▶️ Run the Application
 
 Start the Streamlit application with:
@@ -521,8 +472,6 @@ streamlit run app.py
 The application will open in your browser.
 
 ---
-
-
 
 ## ☁️ Deployment
 
@@ -566,10 +515,7 @@ The application can continue to provide historical analytics even when optional 
 
 ![AI Assistant](Screenshots/ai-assistant.png)
 
-
 ---
-
-
 
 ## ⚠️ Limitations
 
@@ -611,8 +557,6 @@ SQLite support is included in the architecture, but the application's analytical
 
 ---
 
-
-
 ## 🚀 Future Improvements
 
 Potential improvements include:
@@ -630,8 +574,6 @@ Potential improvements include:
 - Add production-scale database support
 
 ---
-
-
 
 ## 🎓 Skills Demonstrated
 
@@ -655,8 +597,6 @@ This project demonstrates practical experience with:
 - Cloud deployment
 
 ---
-
-
 
 ## 💡 Key Takeaway
 
@@ -687,8 +627,6 @@ This makes MobilityLens an **analytics-first application with a practical Genera
 
 ---
 
-
-
 ## 👨‍💻 Author
 
 **Avinash Reddy**
@@ -698,8 +636,6 @@ MSc Statistics | Data Analyst Aspirant
 Skills: Python • SQL • Pandas • Power BI • Excel • Statistics • Streamlit • Generative AI
 
 ---
-
-
 
 ## ⭐ Project Positioning
 
